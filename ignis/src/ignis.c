@@ -265,8 +265,13 @@ bool IgnisInit(void)
         }
 
         stbi_set_flip_vertically_on_load(1);
-
-        defaultTexture = LoadTexture("resources/textures/white.png");
+        
+        // Set up default white texture
+        {
+            uint8_t pixels[4];
+            pixels[0] = pixels[1] = pixels[2] = pixels[3] = 255;
+            defaultTexture = LoadTextureFromData(pixels, 1, 1, 4);
+        }
 
         // Initialize freetype
         if (FT_Init_FreeType(&context.freetypeLibrary) != 0)
@@ -1111,6 +1116,8 @@ Texture LoadTextureFromData(const uint8_t *pixels, int width, int height, int nu
     memcpy(data, pixels, imageSize);
     vkUnmapMemory(context.vulkan.logicalDevice, stagingBufferMemory);
 
+    // TODO: Image created below is forced to be RGBA, so need to handle texture data with less channels
+    
     VkImage image;
     VkDeviceMemory memory;
     bool result = CreateImage2D
