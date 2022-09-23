@@ -1,4 +1,4 @@
-#include "ignis.h"
+#include "ignis/ignis.h"
 
 #include <stdio.h>
 

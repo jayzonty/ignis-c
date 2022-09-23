@@ -1,6 +1,6 @@
-#include "ignis.h"
+#include "ignis/ignis.h"
 
-#include "ignis_math.h"
+#include "ignis/ignis_math.h"
 #include "ignis_vector.h"
 #include "ignis_vulkan.h"
 
