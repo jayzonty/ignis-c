@@ -1,5 +1,5 @@
-#ifndef ENGINE_H
-#define ENGINE_H
+#ifndef IGNIS_H
+#define IGNIS_H
 
 #include "ignis_math.h"
 
@@ -72,6 +72,16 @@ typedef enum
     KEY_DOWN = 264,
     KEY_UP = 265,
 } Key;
+
+// When linking with C++, prevent name mangling of C functions
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// ----------------------------------------
+// Core Functions
+// ----------------------------------------
 
 /**
  * @brief Initializes the engine.
@@ -276,4 +286,9 @@ Font LoadFont(const char *fontFilePath);
  */
 void UnloadFont(Font font);
 
-#endif // ENGINE_H
+// extern "C"
+#ifdef __cplusplus
+}
+#endif
+
+#endif // IGNIS_H

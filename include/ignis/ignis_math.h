@@ -1,7 +1,11 @@
-#ifndef ENGINE_MATH_H
-#define ENGINE_MATH_H
+#ifndef IGNIS_MATH_H
+#define IGNIS_MATH_H
 
 #include <stdint.h>
+
+// ----------------------------------------
+// Structs
+// ----------------------------------------
 
 // 2-D vector
 typedef struct
@@ -20,6 +24,16 @@ typedef struct
 {
     float x, y, width, height;
 } Rect;
+
+// When linking with C++, prevent name mangling of C functions
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+// ----------------------------------------
+// Vector2 operations
+// ----------------------------------------
 
 /**
  * @brief Addition between two Vector2's.
@@ -66,6 +80,10 @@ float Vector2Magnitude(Vector2 v);
  */
 Vector2 Vector2Normalize(Vector2 v);
 
+// ----------------------------------------
+// Miscellaneous utility operations
+// ----------------------------------------
+
 /**
  * @brief Clamps the specified value between the specified minimum and maximum.
  * @param[in] val Value to clamp
@@ -91,4 +109,9 @@ uint32_t Min(uint32_t a, uint32_t b);
  */
 uint32_t Max(uint32_t a, uint32_t b);
 
-#endif // ENGINE_MATH_H
+// extern "C"
+#ifdef __cplusplus
+}
+#endif
+
+#endif // IGNIS_MATH_H
