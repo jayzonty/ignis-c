@@ -155,6 +155,15 @@ void EndDrawing(void);
 void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color);
 
 /**
+ * @brief Adds a circle to the list of things to be drawn by the renderer.
+ * @param[in] position Position
+ * @param[in] radius Radius
+ * @param[in] origin Origin
+ * @param[in] color Color
+ */
+void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
+
+/**
  * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
  * @param[in] position Rectangle position
  * @param[in] size Rectangle size

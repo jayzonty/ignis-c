@@ -480,6 +480,83 @@ void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color)
 }
 
 /**
+ * @brief Adds a circle to the list of things to be drawn by the renderer.
+ * @param[in] position Position
+ * @param[in] radius Radius
+ * @param[in] origin Origin
+ * @param[in] color Color
+ */
+void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
+{
+    const uint32_t NUM_SEGMENTS = 90;
+    const uint32_t CIRCLE_VERTEX_COUNT = NUM_SEGMENTS * 3;
+
+    if ((defaultRenderBatch.vertices == NULL) || (defaultRenderBatch.vertexBuffer == VK_NULL_HANDLE))
+    {
+        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
+        return;
+    }
+
+    if (defaultRenderBatch.numActiveVertices + CIRCLE_VERTEX_COUNT > MAX_VERTICES_PER_BATCH)
+    {
+        printf("[Engine] Not enough vertices in the default render batch to draw a new circle!\n");
+        return;
+    }
+
+    float segmentAngle = (M_PI * 2.0f) / NUM_SEGMENTS;
+    uint32_t index = defaultRenderBatch.numActiveVertices;
+    for (uint32_t i = 0; i < NUM_SEGMENTS; ++i)
+    {
+        // Circle center
+        float x = position.x - radius * (origin.x - 0.5f) * 2.0f;
+        float y = position.y - radius * (origin.y - 0.5f) * 2.0f;
+        defaultRenderBatch.vertices[index].x = x / context.window.width * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index].y = y / context.window.height * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index].z = 0.0f;
+        defaultRenderBatch.vertices[index].r = color.r / 255.0f;
+        defaultRenderBatch.vertices[index].g = color.g / 255.0f;
+        defaultRenderBatch.vertices[index].b = color.b / 255.0f;
+        defaultRenderBatch.vertices[index].u = 0.0f;
+        defaultRenderBatch.vertices[index].v = 0.0f;
+        ++index;
+
+        // Segment vertex 1
+        x = position.x + radius * cosf(i * segmentAngle) - radius * (origin.x - 0.5f) * 2.0f;
+        y = position.y + radius * sinf(i * segmentAngle) - radius * (origin.y - 0.5f) * 2.0f;
+        defaultRenderBatch.vertices[index].x = x / context.window.width * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index].y = y / context.window.height * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index].z = 0.0f;
+        defaultRenderBatch.vertices[index].r = color.r / 255.0f;
+        defaultRenderBatch.vertices[index].g = color.g / 255.0f;
+        defaultRenderBatch.vertices[index].b = color.b / 255.0f;
+        defaultRenderBatch.vertices[index].u = 1.0f;
+        defaultRenderBatch.vertices[index].v = 1.0f;
+        ++index;
+
+        // Segment vertex 2
+        x = position.x + radius * cosf((i + 1) * segmentAngle) - radius * (origin.x - 0.5f) * 2.0f;
+        y = position.y + radius * sinf((i + 1) * segmentAngle) - radius * (origin.y - 0.5f) * 2.0f;
+        defaultRenderBatch.vertices[index].x = x / context.window.width * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index].y = y / context.window.height * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index].z = 0.0f;
+        defaultRenderBatch.vertices[index].r = color.r / 255.0f;
+        defaultRenderBatch.vertices[index].g = color.g / 255.0f;
+        defaultRenderBatch.vertices[index].b = color.b / 255.0f;
+        defaultRenderBatch.vertices[index].u = 0.0f;
+        defaultRenderBatch.vertices[index].v = 1.0f;
+        ++index;
+    }
+
+    RenderBatchUnit unit = { 0 };
+    unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
+    unit.numVertices = CIRCLE_VERTEX_COUNT;
+    unit.textureId = defaultTexture.id;
+    VectorPushBack(&defaultRenderBatch.renderBatchUnits, &unit);
+
+    defaultRenderBatch.numActiveVertices += CIRCLE_VERTEX_COUNT;
+}
+
+/**
  * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
  * @param[in] position Rectangle position
  * @param[in] size Rectangle size
