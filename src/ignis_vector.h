@@ -1,5 +1,5 @@
-#ifndef ENGINE_VECTOR_H
-#define ENGINE_VECTOR_H
+#ifndef IGNIS_VECTOR_H
+#define IGNIS_VECTOR_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -73,4 +73,4 @@ void* VectorGetElementAt(Vector *v, size_t index);
  */
 void* VectorGetData(Vector *v);
 
-#endif // ENGINE_VECTOR_H
+#endif // IGNIS_VECTOR_H

@@ -1,5 +1,5 @@
-#ifndef ENGINE_VULKAN_H
-#define ENGINE_VULKAN_H
+#ifndef IGNIS_VULKAN_H
+#define IGNIS_VULKAN_H
 
 #include <vulkan/vulkan_core.h>
 
@@ -45,4 +45,4 @@ bool CreateImage2D(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, cons
  */
 bool CreateImageView(VkDevice logicalDevice, VkImage image, VkFormat format, VkImageAspectFlags imageAspectFlags, VkImageView *imageView);
 
-#endif // ENGINE_VULKAN_H
+#endif // IGNIS_VULKAN_H
