@@ -14,6 +14,7 @@ typedef enum
 int main(int argc, char *argv[])
 {
     IgnisInit();
+    SetTargetFPS(60);
 
     Font font = LoadFont("resources/fonts/FiraMono-Regular.ttf");
 
@@ -49,6 +50,8 @@ int main(int argc, char *argv[])
     float prevTime = GetCurrentTime();
     while (!IsWindowClosed())
     {
+        BeginFrame();
+
         float currentTime = GetCurrentTime();
         float deltaTime = currentTime - prevTime;
         prevTime = currentTime;
@@ -247,7 +250,7 @@ int main(int argc, char *argv[])
         EndDrawing();
         Draw();
 
-        ProcessInputEvents();
+        EndFrame();
     }
 
     UnloadFont(font);

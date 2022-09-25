@@ -110,6 +110,12 @@ typedef struct
     FT_Library freetypeLibrary;
 
     int randomSeed;
+
+    // --- Timing related variables ---
+    int targetFramerate;
+    float targetFrameTime;
+    float previousFrameStartTime;
+    float currentFrameStartTime;
 } Context;
 
 typedef struct
@@ -190,6 +196,21 @@ bool CreateShaderModule(const char *shaderFilePath, VkDevice device, VkShaderMod
 // ----------------------------------------
 // Input Functions
 // ----------------------------------------
+
+void ProcessInputEvents(void)
+{
+    if (context.isInitialized)
+    {
+        for (int key = 0; key < MAX_KEYS; ++key)
+        {
+            if ((glfwGetKey(context.window.handle, key) == GLFW_PRESS) && (keyInputStates[key] == INPUT_STATE_PRESSED))
+            {
+                keyInputStates[key] = INPUT_STATE_HELD;
+            }
+        }
+        glfwPollEvents();
+    }
+}
 
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -383,10 +404,63 @@ float GetCurrentTime(void)
 }
 
 /**
- * @brief Processes input events.
+ * @brief Sets the target framerate of the application.
+ * @param[in] targetFPS Target framerate
  */
-void ProcessInputEvents(void)
+void SetTargetFPS(int targetFPS)
 {
+    if (targetFPS <= 0)
+    {
+        context.targetFramerate = 0;
+        context.targetFrameTime = 0.0f;
+    }
+    else
+    {
+        context.targetFramerate = targetFPS;
+        context.targetFrameTime = 1.0f / targetFPS;
+    }
+}
+
+/**
+ * @brief Prepares the next frame.
+ */
+void BeginFrame()
+{
+    context.previousFrameStartTime = context.currentFrameStartTime;
+    context.currentFrameStartTime = GetCurrentTime();
+}
+
+/**
+ * @brief Ends the current frame.
+ */
+void EndFrame()
+{
+    // Wait for the extra time
+    if (context.targetFramerate > 0)
+    {
+        float frameEndTime = GetCurrentTime();
+        float frameTime = frameEndTime - context.currentFrameStartTime;
+
+        double sleepTime = context.targetFrameTime - frameTime;
+        if (sleepTime > 0.0f)
+        {
+            time_t seconds = sleepTime;
+            long nanoseconds = (sleepTime - seconds) * 1000000000L;
+
+            struct timespec request = { 0 };
+            request.tv_sec = seconds;
+            request.tv_nsec = nanoseconds;
+
+            // Make sure we sleep again when the sleep
+            // gets interrupted
+            while (nanosleep(&request, &request) == -1)
+            {
+                continue;
+            }
+        }
+    }
+
+    // Process input events
     if (context.isInitialized)
     {
         for (int key = 0; key < MAX_KEYS; ++key)

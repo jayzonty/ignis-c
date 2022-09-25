@@ -119,9 +119,21 @@ bool IsWindowClosed(void);
 float GetCurrentTime(void);
 
 /**
- * @brief Processes input events.
+ * @brief Sets the target framerate of the application.
+ * @param[in] targetFPS Target framerate
  */
-void ProcessInputEvents(void);
+void SetTargetFPS(int targetFPS);
+
+/**
+ * @brief Prepares the next frame.
+ */
+void BeginFrame();
+
+/**
+ * @brief Ends the current frame.
+ */
+void EndFrame();
+
 
 // ----------------------------------------
 // Input Functions
