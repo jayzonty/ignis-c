@@ -854,7 +854,7 @@ void Draw(void)
     VkRenderPassBeginInfo renderPassBeginInfo = { 0 };
     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassBeginInfo.renderPass = context.vulkan.renderPass;
-    renderPassBeginInfo.framebuffer = context.vulkan.framesData[context.vulkan.currentFrameIndex].framebuffer;
+    renderPassBeginInfo.framebuffer = context.vulkan.framesData[nextImageIndex].framebuffer;
     VkRect2D renderArea = { .offset = { .x = 0, .y = 0 }, .extent = context.vulkan.swapchainImageExtent };
     renderPassBeginInfo.renderArea = renderArea;
     VkClearValue clearValues[2] = { 0 };
