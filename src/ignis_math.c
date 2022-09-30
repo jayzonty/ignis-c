@@ -17,8 +17,7 @@ Vector2 Vector2Add(Vector2 a, Vector2 b)
 /**
  * @brief Scales the specified vector by the specified scale value.
  * @param[in] v Vector
- * @param[in] s Scale value
- * @return Scaled vector
+ * @param[in] s Scale value @return Scaled vector
  */
 Vector2 Vector2Scale(Vector2 v, float s)
 {
@@ -65,7 +64,7 @@ float Vector2Magnitude(Vector2 v)
  */
 Vector2 Vector2Normalize(Vector2 v)
 {
-    float magnitude = Vector2SquaredMagnitude(v);
+    float magnitude = Vector2Magnitude(v);
     if (magnitude > 0.0f)
     {
         return Vector2Scale(v, 1.0f / magnitude);
