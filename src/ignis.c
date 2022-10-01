@@ -631,6 +631,67 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
 }
 
 /**
+ * @brief Draws a line between the starting and end point.
+ * @param[in] start Start point
+ * @param[in] end End point
+ * @param[in] width Width
+ * @param[in] color Color
+ */
+void DrawLine(Vector2 start, Vector2 end, float width, Color color)
+{
+    if ((defaultRenderBatch.vertices == NULL) || (defaultRenderBatch.vertexBuffer == VK_NULL_HANDLE))
+    {
+        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
+        return;
+    }
+
+    if (defaultRenderBatch.numActiveVertices + 6 > MAX_VERTICES_PER_BATCH)
+    {
+        printf("[Engine] Not enough vertices in the default render batch to draw a new circle!\n");
+        return;
+    }
+
+    Vector2 d;
+    d.x = end.x - start.x;
+    d.y = end.y - start.y;
+
+    Vector2 normal;
+    normal.x = -d.y;
+    normal.y =  d.x;
+    normal = Vector2Normalize(normal);
+
+    float halfWidth = width / 2.0f;
+    float normalMult[6] = { -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f };
+    float dMult[6] = { 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f };
+
+    float u[6] = { 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f };
+    float v[6] = { 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f };
+
+    uint32_t index = defaultRenderBatch.numActiveVertices;
+    for (uint32_t i = 0; i < 6; ++i)
+    {
+        defaultRenderBatch.vertices[index + i].x = ((start.x + d.x * dMult[i] + normal.x * normalMult[i] * width) / context.window.width) * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index + i].y = ((start.y + d.y * dMult[i] + normal.y * normalMult[i] * width) / context.window.width) * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[index + i].z = 0.0f;
+
+        defaultRenderBatch.vertices[index + i].r = color.r / 255.0f;
+        defaultRenderBatch.vertices[index + i].g = color.g / 255.0f;
+        defaultRenderBatch.vertices[index + i].b = color.b / 255.0f;
+
+        defaultRenderBatch.vertices[index + i].u = u[i];
+        defaultRenderBatch.vertices[index + i].v = v[i];
+    }
+
+    RenderBatchUnit unit = { 0 };
+    unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
+    unit.numVertices = 6;
+    unit.textureId = defaultTexture.id;
+    VectorPushBack(&defaultRenderBatch.renderBatchUnits, &unit);
+
+    defaultRenderBatch.numActiveVertices += 6;
+}
+
+/**
  * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
  * @param[in] position Rectangle position
  * @param[in] size Rectangle size

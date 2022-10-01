@@ -186,6 +186,15 @@ void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color);
 void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
 
 /**
+ * @brief Draws a line between the starting and end point.
+ * @param[in] start Start point
+ * @param[in] end End point
+ * @param[in] width Width
+ * @param[in] color Color
+ */
+void DrawLine(Vector2 start, Vector2 end, float width, Color color);
+
+/**
  * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
  * @param[in] position Rectangle position
  * @param[in] size Rectangle size
