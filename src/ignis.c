@@ -534,6 +534,20 @@ bool IsMouseButtonDown(MouseButton mouseButton)
     return (mouseButtonInputStates[mouseButton] == INPUT_STATE_HELD);
 }
 
+/**
+ * @brief Gets the current position of the mouse cursor.
+ * @return Current position of the mouse cursor
+ */
+Vector2 GetMousePosition()
+{
+    double x, y;
+    glfwGetCursorPos(context.window.handle, &x, &y);
+
+    Vector2 ret = { x, y };
+    ret.y = context.window.height - ret.y;
+    return ret;
+}
+
 /** 
  * @brief Prepares the renderer for accepting drawing commands.
  */

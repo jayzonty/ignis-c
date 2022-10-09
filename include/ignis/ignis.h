@@ -174,6 +174,12 @@ bool IsMouseButtonPressed(MouseButton mouseButton);
  */
 bool IsMouseButtonDown(MouseButton mouseButton);
 
+/**
+ * @brief Gets the current position of the mouse cursor.
+ * @return Current position of the mouse cursor
+ */
+Vector2 GetMousePosition();
+
 // ----------------------------------------
 // Drawing Functions
 // ----------------------------------------
