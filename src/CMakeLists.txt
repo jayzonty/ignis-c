@@ -8,9 +8,10 @@ set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(deps/glfw-3.3.8/)
 
 set (SOURCE_FILES
+    dynamic_array.c
+
     ignis.c
     ignis_math.c
-    ignis_vector.c
     ignis_vulkan.c
 )
 

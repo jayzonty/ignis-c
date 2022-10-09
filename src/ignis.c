@@ -1,7 +1,7 @@
 #include "ignis/ignis.h"
 
+#include "dynamic_array.h"
 #include "ignis/ignis_math.h"
-#include "ignis_vector.h"
 #include "ignis_vulkan.h"
 
 #define GLFW_INCLUDE_NONE
@@ -134,7 +134,7 @@ typedef struct
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
 
-    Vector renderBatchUnits;
+    DynamicArray renderBatchUnits;
 } RenderBatch;
 
 typedef struct
@@ -161,7 +161,7 @@ static uint32_t MAX_VERTICES_PER_BATCH = 10000;
 static uint32_t nextTextureId = 0;
 static Texture defaultTexture = { 0 };
 
-static Vector fontTextures = { 0 };
+static DynamicArray fontTextures = { 0 };
 
 typedef enum
 {
@@ -279,7 +279,7 @@ bool IgnisInit(void)
         {
             defaultRenderBatch.numActiveVertices = 0;
             defaultRenderBatch.vertices = (Vertex*)malloc(sizeof(Vertex) * MAX_VERTICES_PER_BATCH);
-            VectorInit(&defaultRenderBatch.renderBatchUnits, sizeof(RenderBatchUnit));
+            DynamicArrayInit(&defaultRenderBatch.renderBatchUnits, sizeof(RenderBatchUnit));
 
             bool result = CreateBuffer
             (
@@ -312,7 +312,7 @@ bool IgnisInit(void)
         {
             printf("[Engine] Failed to initialize Freetype library!\n");
         }
-        VectorInit(&fontTextures, sizeof(FontTextureData));
+        DynamicArrayInit(&fontTextures, sizeof(FontTextureData));
     }
     else
     {
@@ -331,19 +331,19 @@ void IgnisCleanup(void)
     {
         vkDeviceWaitIdle(context.vulkan.logicalDevice);
 
-        size_t numfontTextures = VectorGetSize(&fontTextures);
+        size_t numfontTextures = DynamicArrayGetSize(&fontTextures);
         for (size_t i = 0; i < numfontTextures; ++i)
         {
-            FontTextureData *textureData = (FontTextureData*)VectorGetElementAt(&fontTextures, i);
+            FontTextureData *textureData = (FontTextureData*)DynamicArrayGetElementAt(&fontTextures, i);
             UnloadTexture(textureData->texture);
         }
-        VectorFree(&fontTextures);
+        DynamicArrayFree(&fontTextures);
 
         FT_Done_FreeType(context.freetypeLibrary);
 
         UnloadTexture(defaultTexture);
 
-        VectorFree(&defaultRenderBatch.renderBatchUnits);
+        DynamicArrayFree(&defaultRenderBatch.renderBatchUnits);
 
         if (defaultRenderBatch.vertexBuffer != VK_NULL_HANDLE)
         {
@@ -554,7 +554,7 @@ Vector2 GetMousePosition()
 void BeginDrawing(void)
 {
     defaultRenderBatch.numActiveVertices = 0;
-    VectorClear(&defaultRenderBatch.renderBatchUnits);
+    DynamicArrayClear(&defaultRenderBatch.renderBatchUnits);
 }
 
 int RenderBatchUnitCompFunc(const void *a, const void *b)
@@ -571,8 +571,8 @@ void EndDrawing(void)
 {
     qsort
     (
-        VectorGetData(&defaultRenderBatch.renderBatchUnits),
-        VectorGetSize(&defaultRenderBatch.renderBatchUnits),
+        DynamicArrayGetData(&defaultRenderBatch.renderBatchUnits),
+        DynamicArrayGetSize(&defaultRenderBatch.renderBatchUnits),
         sizeof(RenderBatchUnit),
         RenderBatchUnitCompFunc
     );
@@ -583,10 +583,10 @@ void EndDrawing(void)
     vkMapMemory(context.vulkan.logicalDevice, defaultRenderBatch.vertexBufferMemory, 0, bufferSize, 0, &mem);
 
     size_t offset = 0;
-    size_t numRenderBatchUnits = VectorGetSize(&defaultRenderBatch.renderBatchUnits);
+    size_t numRenderBatchUnits = DynamicArrayGetSize(&defaultRenderBatch.renderBatchUnits);
     for (size_t i = 0; i < numRenderBatchUnits; ++i)
     {
-        RenderBatchUnit *unit = (RenderBatchUnit*)VectorGetElementAt(&defaultRenderBatch.renderBatchUnits, i);
+        RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&defaultRenderBatch.renderBatchUnits, i);
         memcpy(mem + offset * sizeof(Vertex), defaultRenderBatch.vertices + unit->firstVertexOffset, sizeof(Vertex) * unit->numVertices);
         offset += unit->numVertices;
     }
@@ -679,7 +679,7 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
     unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
     unit.numVertices = CIRCLE_VERTEX_COUNT;
     unit.textureId = defaultTexture.id;
-    VectorPushBack(&defaultRenderBatch.renderBatchUnits, &unit);
+    DynamicArrayAdd(&defaultRenderBatch.renderBatchUnits, &unit);
 
     defaultRenderBatch.numActiveVertices += CIRCLE_VERTEX_COUNT;
 }
@@ -740,7 +740,7 @@ void DrawLine(Vector2 start, Vector2 end, float width, Color color)
     unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
     unit.numVertices = 6;
     unit.textureId = defaultTexture.id;
-    VectorPushBack(&defaultRenderBatch.renderBatchUnits, &unit);
+    DynamicArrayAdd(&defaultRenderBatch.renderBatchUnits, &unit);
 
     defaultRenderBatch.numActiveVertices += 6;
 }
@@ -793,7 +793,7 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
     unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
     unit.numVertices = 6;
     unit.textureId = texture.id;
-    VectorPushBack(&defaultRenderBatch.renderBatchUnits, &unit);
+    DynamicArrayAdd(&defaultRenderBatch.renderBatchUnits, &unit);
 
     defaultRenderBatch.numActiveVertices += 6;
 }
@@ -810,10 +810,10 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
 {
     FontTextureData *fontData = NULL;
 
-    size_t numCachedFontTextures = VectorGetSize(&fontTextures);
+    size_t numCachedFontTextures = DynamicArrayGetSize(&fontTextures);
     for (size_t i = 0; i < numCachedFontTextures; ++i)
     {
-        FontTextureData *fontTextureData = (FontTextureData*)VectorGetElementAt(&fontTextures, i);
+        FontTextureData *fontTextureData = (FontTextureData*)DynamicArrayGetElementAt(&fontTextures, i);
         if ((fontTextureData->face == font.face) && (fontTextureData->fontSize == fontSize))
         {
             fontData = fontTextureData;
@@ -884,9 +884,9 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
         }
 
         data.texture = LoadTextureFromData(pixels, glyphAtlasSize, glyphAtlasSize, 4);
-        VectorPushBack(&fontTextures, &data);
+        DynamicArrayAdd(&fontTextures, &data);
 
-        fontData = VectorGetElementAt(&fontTextures, VectorGetSize(&fontTextures) - 1);
+        fontData = DynamicArrayGetElementAt(&fontTextures, DynamicArrayGetSize(&fontTextures) - 1);
 
         free(pixels);
     }
@@ -1009,10 +1009,10 @@ void Draw(void)
     uint32_t vertexOffset = 0;
     uint32_t numVertices = 0;
     uint32_t prevTex = 0;
-    size_t numRenderBatchUnits = VectorGetSize(&defaultRenderBatch.renderBatchUnits);
+    size_t numRenderBatchUnits = DynamicArrayGetSize(&defaultRenderBatch.renderBatchUnits);
     for (size_t i = 0; i < numRenderBatchUnits; ++i)
     {
-        RenderBatchUnit *unit = (RenderBatchUnit*)VectorGetElementAt(&defaultRenderBatch.renderBatchUnits, i);
+        RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&defaultRenderBatch.renderBatchUnits, i);
         if (i == 0)
         {
             prevTex = unit->textureId;
