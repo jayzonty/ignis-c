@@ -27,6 +27,7 @@
 #define GLYPH_ATLAS_NUM_COLUMNS 10
 
 #define MAX_KEYS 512
+#define MAX_MOUSE_BUTTONS 3
 
 // Vertex struct
 typedef struct 
@@ -170,6 +171,7 @@ typedef enum
 } InputState;
 
 static InputState keyInputStates[MAX_KEYS] = { 0 };
+static InputState mouseButtonInputStates[MAX_MOUSE_BUTTONS] = { 0 };
 
 // ----------------------------------------
 // Vulkan Functions
@@ -194,42 +196,52 @@ bool GetQueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR surface, uint32
 bool CreateShaderModule(const char *shaderFilePath, VkDevice device, VkShaderModule *outShaderModule);
 
 // ----------------------------------------
-// Input Functions
+// Input callback Functions
 // ----------------------------------------
-
-void ProcessInputEvents(void)
-{
-    if (context.isInitialized)
-    {
-        for (int key = 0; key < MAX_KEYS; ++key)
-        {
-            if ((glfwGetKey(context.window.handle, key) == GLFW_PRESS) && (keyInputStates[key] == INPUT_STATE_PRESSED))
-            {
-                keyInputStates[key] = INPUT_STATE_HELD;
-            }
-        }
-        glfwPollEvents();
-    }
-}
 
 void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+    if (context.isInitialized)
+    {
+        if (action == GLFW_PRESS)
+        {
+            if (keyInputStates[key] == INPUT_STATE_RELEASED)
+            {
+                keyInputStates[key] = INPUT_STATE_PRESSED;
+            }
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            if (keyInputStates[key] == INPUT_STATE_PRESSED)
+            {
+                keyInputStates[key] = INPUT_STATE_RELEASED;
+            }
+            else if (keyInputStates[key] == INPUT_STATE_HELD)
+            {
+                keyInputStates[key] = INPUT_STATE_RELEASED;
+            }
+        }
+    }
+}
+
+void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
     if (action == GLFW_PRESS)
     {
-        if (keyInputStates[key] == INPUT_STATE_RELEASED)
+        if (mouseButtonInputStates[button] == INPUT_STATE_RELEASED)
         {
-            keyInputStates[key] = INPUT_STATE_PRESSED;
+            mouseButtonInputStates[button] = INPUT_STATE_PRESSED;
         }
     }
     else if (action == GLFW_RELEASE)
     {
-        if (keyInputStates[key] == INPUT_STATE_PRESSED)
+        if (mouseButtonInputStates[button] == INPUT_STATE_PRESSED)
         {
-            keyInputStates[key] = INPUT_STATE_RELEASED;
+            mouseButtonInputStates[button] = INPUT_STATE_RELEASED;
         }
-        else if (keyInputStates[key] == INPUT_STATE_HELD)
+        else if (mouseButtonInputStates[button] == INPUT_STATE_HELD)
         {
-            keyInputStates[key] = INPUT_STATE_RELEASED;
+            mouseButtonInputStates[button] = INPUT_STATE_RELEASED;
         }
     }
 }
@@ -255,6 +267,7 @@ bool IgnisInit(void)
         InitWindow(800, 600, "Test");
 
         glfwSetKeyCallback(context.window.handle, KeyCallback);
+        glfwSetMouseButtonCallback(context.window.handle, MouseButtonCallback);
 
         if (!InitVulkan())
         {
@@ -470,6 +483,13 @@ void EndFrame()
                 keyInputStates[key] = INPUT_STATE_HELD;
             }
         }
+        for (int button = 0; button < MAX_MOUSE_BUTTONS; ++button)
+        {
+            if ((glfwGetMouseButton(context.window.handle, button) == GLFW_PRESS) && (mouseButtonInputStates[button] == INPUT_STATE_PRESSED))
+            {
+                mouseButtonInputStates[button] = INPUT_STATE_HELD;
+            }
+        }
         glfwPollEvents();
     }
 }
@@ -492,6 +512,26 @@ bool IsKeyPressed(Key key)
 bool IsKeyDown(Key key)
 {
     return (keyInputStates[key] == INPUT_STATE_HELD);
+}
+
+/**
+ * @brief Checks whether the specified mouse button is pressed during the current frame.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is pressed during the current frame. 
+ */
+bool IsMouseButtonPressed(MouseButton mouseButton)
+{
+    return (mouseButtonInputStates[mouseButton] == INPUT_STATE_PRESSED);
+}
+
+/**
+ * @brief Checks whether the specified mouse button is currently being held down or not.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is currently being held down. 
+ */
+bool IsMouseButtonDown(MouseButton mouseButton)
+{
+    return (mouseButtonInputStates[mouseButton] == INPUT_STATE_HELD);
 }
 
 /** 

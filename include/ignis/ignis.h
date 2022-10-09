@@ -73,6 +73,13 @@ typedef enum
     KEY_UP = 265,
 } Key;
 
+typedef enum
+{
+    MOUSE_BUTTON_LEFT = 0,
+    MOUSE_BUTTON_MIDDLE = 1,
+    MOUSE_BUTTON_RIGHT = 2
+} MouseButton;
+
 // When linking with C++, prevent name mangling of C functions
 #ifdef __cplusplus
 extern "C"
@@ -152,6 +159,20 @@ bool IsKeyPressed(Key key);
  * @return True if the specified key is currently being held down.
  */
 bool IsKeyDown(Key key);
+
+/**
+ * @brief Checks whether the specified mouse button is pressed during the current frame.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is pressed during the current frame. 
+ */
+bool IsMouseButtonPressed(MouseButton mouseButton);
+
+/**
+ * @brief Checks whether the specified mouse button is currently being held down or not.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is currently being held down. 
+ */
+bool IsMouseButtonDown(MouseButton mouseButton);
 
 // ----------------------------------------
 // Drawing Functions
