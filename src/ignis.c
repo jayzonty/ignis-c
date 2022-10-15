@@ -2,6 +2,7 @@
 
 #include "dynamic_array.h"
 #include "ignis/ignis_math.h"
+#include "ignis_graphics.h"
 #include "ignis_vulkan.h"
 
 #define GLFW_INCLUDE_NONE
@@ -28,14 +29,6 @@
 
 #define MAX_KEYS 512
 #define MAX_MOUSE_BUTTONS 3
-
-// Vertex struct
-typedef struct 
-{
-    float x, y, z;
-    float r, g, b;
-    float u, v;
-} Vertex;
 
 // Window struct
 typedef struct
@@ -118,24 +111,6 @@ typedef struct
     float previousFrameStartTime;
     float currentFrameStartTime;
 } Context;
-
-typedef struct
-{
-    uint32_t firstVertexOffset;
-    uint32_t numVertices;
-    uint32_t textureId;
-} RenderBatchUnit;
-
-typedef struct
-{
-    uint32_t numActiveVertices;
-    Vertex *vertices;
-
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    DynamicArray renderBatchUnits;
-} RenderBatch;
 
 typedef struct
 {
@@ -569,6 +544,14 @@ int RenderBatchUnitCompFunc(const void *a, const void *b)
  */
 void EndDrawing(void)
 {
+    // Transform vertices to NDC
+    // TODO: Transform via a projection matrix instead
+    for (size_t i = 0; i < defaultRenderBatch.numActiveVertices; ++i)
+    {
+        defaultRenderBatch.vertices[i].x = (defaultRenderBatch.vertices[i].x / context.window.width) * 2.0f - 1.0f;
+        defaultRenderBatch.vertices[i].y = (defaultRenderBatch.vertices[i].y / context.window.height) * 2.0f - 1.0f;
+    }
+
     qsort
     (
         DynamicArrayGetData(&defaultRenderBatch.renderBatchUnits),
@@ -616,72 +599,7 @@ void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color)
  */
 void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
 {
-    const uint32_t NUM_SEGMENTS = 90;
-    const uint32_t CIRCLE_VERTEX_COUNT = NUM_SEGMENTS * 3;
-
-    if ((defaultRenderBatch.vertices == NULL) || (defaultRenderBatch.vertexBuffer == VK_NULL_HANDLE))
-    {
-        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
-        return;
-    }
-
-    if (defaultRenderBatch.numActiveVertices + CIRCLE_VERTEX_COUNT > MAX_VERTICES_PER_BATCH)
-    {
-        printf("[Engine] Not enough vertices in the default render batch to draw a new circle!\n");
-        return;
-    }
-
-    float segmentAngle = (M_PI * 2.0f) / NUM_SEGMENTS;
-    uint32_t index = defaultRenderBatch.numActiveVertices;
-    for (uint32_t i = 0; i < NUM_SEGMENTS; ++i)
-    {
-        // Circle center
-        float x = position.x - radius * (origin.x - 0.5f) * 2.0f;
-        float y = position.y - radius * (origin.y - 0.5f) * 2.0f;
-        defaultRenderBatch.vertices[index].x = x / context.window.width * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index].y = y / context.window.height * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index].z = 0.0f;
-        defaultRenderBatch.vertices[index].r = color.r / 255.0f;
-        defaultRenderBatch.vertices[index].g = color.g / 255.0f;
-        defaultRenderBatch.vertices[index].b = color.b / 255.0f;
-        defaultRenderBatch.vertices[index].u = 0.0f;
-        defaultRenderBatch.vertices[index].v = 0.0f;
-        ++index;
-
-        // Segment vertex 1
-        x = position.x + radius * cosf(i * segmentAngle) - radius * (origin.x - 0.5f) * 2.0f;
-        y = position.y + radius * sinf(i * segmentAngle) - radius * (origin.y - 0.5f) * 2.0f;
-        defaultRenderBatch.vertices[index].x = x / context.window.width * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index].y = y / context.window.height * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index].z = 0.0f;
-        defaultRenderBatch.vertices[index].r = color.r / 255.0f;
-        defaultRenderBatch.vertices[index].g = color.g / 255.0f;
-        defaultRenderBatch.vertices[index].b = color.b / 255.0f;
-        defaultRenderBatch.vertices[index].u = 1.0f;
-        defaultRenderBatch.vertices[index].v = 1.0f;
-        ++index;
-
-        // Segment vertex 2
-        x = position.x + radius * cosf((i + 1) * segmentAngle) - radius * (origin.x - 0.5f) * 2.0f;
-        y = position.y + radius * sinf((i + 1) * segmentAngle) - radius * (origin.y - 0.5f) * 2.0f;
-        defaultRenderBatch.vertices[index].x = x / context.window.width * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index].y = y / context.window.height * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index].z = 0.0f;
-        defaultRenderBatch.vertices[index].r = color.r / 255.0f;
-        defaultRenderBatch.vertices[index].g = color.g / 255.0f;
-        defaultRenderBatch.vertices[index].b = color.b / 255.0f;
-        defaultRenderBatch.vertices[index].u = 0.0f;
-        defaultRenderBatch.vertices[index].v = 1.0f;
-        ++index;
-    }
-
-    RenderBatchUnit unit = { 0 };
-    unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
-    unit.numVertices = CIRCLE_VERTEX_COUNT;
-    unit.textureId = defaultTexture.id;
-    DynamicArrayAdd(&defaultRenderBatch.renderBatchUnits, &unit);
-
-    defaultRenderBatch.numActiveVertices += CIRCLE_VERTEX_COUNT;
+    Ignis_Graphics_DrawCircle(&defaultRenderBatch, position, radius, origin, color);
 }
 
 /**
@@ -693,56 +611,7 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
  */
 void DrawLine(Vector2 start, Vector2 end, float width, Color color)
 {
-    if ((defaultRenderBatch.vertices == NULL) || (defaultRenderBatch.vertexBuffer == VK_NULL_HANDLE))
-    {
-        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
-        return;
-    }
-
-    if (defaultRenderBatch.numActiveVertices + 6 > MAX_VERTICES_PER_BATCH)
-    {
-        printf("[Engine] Not enough vertices in the default render batch to draw a new circle!\n");
-        return;
-    }
-
-    Vector2 d;
-    d.x = end.x - start.x;
-    d.y = end.y - start.y;
-
-    Vector2 normal;
-    normal.x = -d.y;
-    normal.y =  d.x;
-    normal = Vector2Normalize(normal);
-
-    float halfWidth = width / 2.0f;
-    float normalMult[6] = { -0.5f, -0.5f, 0.5f, 0.5f, 0.5f, -0.5f };
-    float dMult[6] = { 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f };
-
-    float u[6] = { 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f };
-    float v[6] = { 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f };
-
-    uint32_t index = defaultRenderBatch.numActiveVertices;
-    for (uint32_t i = 0; i < 6; ++i)
-    {
-        defaultRenderBatch.vertices[index + i].x = ((start.x + d.x * dMult[i] + normal.x * normalMult[i] * width) / context.window.width) * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index + i].y = ((start.y + d.y * dMult[i] + normal.y * normalMult[i] * width) / context.window.width) * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[index + i].z = 0.0f;
-
-        defaultRenderBatch.vertices[index + i].r = color.r / 255.0f;
-        defaultRenderBatch.vertices[index + i].g = color.g / 255.0f;
-        defaultRenderBatch.vertices[index + i].b = color.b / 255.0f;
-
-        defaultRenderBatch.vertices[index + i].u = u[i];
-        defaultRenderBatch.vertices[index + i].v = v[i];
-    }
-
-    RenderBatchUnit unit = { 0 };
-    unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
-    unit.numVertices = 6;
-    unit.textureId = defaultTexture.id;
-    DynamicArrayAdd(&defaultRenderBatch.renderBatchUnits, &unit);
-
-    defaultRenderBatch.numActiveVertices += 6;
+    Ignis_Graphics_DrawLine(&defaultRenderBatch, start, end, width, color);
 }
 
 /**
@@ -756,46 +625,7 @@ void DrawLine(Vector2 start, Vector2 end, float width, Color color)
  */
 void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint)
 {
-    if ((defaultRenderBatch.vertices == NULL) || (defaultRenderBatch.vertexBuffer == VK_NULL_HANDLE))
-    {
-        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
-        return;
-    }
-
-    if (defaultRenderBatch.numActiveVertices + 6 > MAX_VERTICES_PER_BATCH)
-    {
-        printf("[Engine] Not enough vertices in the default render batch to draw a new rectangle!\n");
-        return;
-    }
-
-    float dx[6] = { 0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f };
-    float dy[6] = { 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f };
-    for (uint32_t i = 0; i < 6; ++i)
-    {
-        uint32_t index = defaultRenderBatch.numActiveVertices + i;
-
-        Vector3 vertexPosition = { 0 };
-        vertexPosition.x = ((position.x + size.x * (dx[i] - origin.x)) / context.window.width) * 2.0f - 1.0f;
-        vertexPosition.y = ((position.y + size.y * (dy[i] - origin.y)) / context.window.height) * 2.0f - 1.0f;
-        vertexPosition.z = 0.0f;
-
-        defaultRenderBatch.vertices[index].x = vertexPosition.x;
-        defaultRenderBatch.vertices[index].y = vertexPosition.y;
-        defaultRenderBatch.vertices[index].z = vertexPosition.z;
-        defaultRenderBatch.vertices[index].r = tint.r / 255.0f;
-        defaultRenderBatch.vertices[index].g = tint.g / 255.0f;
-        defaultRenderBatch.vertices[index].b = tint.b / 255.0f;
-        defaultRenderBatch.vertices[index].u = uvRect.x + uvRect.width * dx[i];
-        defaultRenderBatch.vertices[index].v = uvRect.y + uvRect.height * dy[i];
-    }
-
-    RenderBatchUnit unit = { 0 };
-    unit.firstVertexOffset = defaultRenderBatch.numActiveVertices;
-    unit.numVertices = 6;
-    unit.textureId = texture.id;
-    DynamicArrayAdd(&defaultRenderBatch.renderBatchUnits, &unit);
-
-    defaultRenderBatch.numActiveVertices += 6;
+    Ignis_Graphics_DrawTexture(&defaultRenderBatch, position, size, origin, texture, uvRect, tint);
 }
 
 /**

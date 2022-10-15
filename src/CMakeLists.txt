@@ -11,6 +11,7 @@ set (SOURCE_FILES
     dynamic_array.c
 
     ignis.c
+    ignis_graphics.c
     ignis_math.c
     ignis_vulkan.c
 )
