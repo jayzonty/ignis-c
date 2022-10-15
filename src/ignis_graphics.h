@@ -1,45 +1,30 @@
 #ifndef IGNIS_GRAPHICS_H
 #define IGNIS_GRAPHICS_H
 
-#include "dynamic_array.h"
 #include "ignis/ignis.h"
 #include "ignis/ignis_math.h"
 
-#include <vulkan/vulkan.h>
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 
-// Vertex struct
-typedef struct 
-{
-    float x, y, z;
-    float r, g, b;
-    float u, v;
-} Vertex;
+bool Ignis_Graphics_Init(int windowWidth, int windowHeight, GLFWwindow* windowHandle);
+void Ignis_Graphics_WaitDeviceIdle(void);
+void Ignis_Graphics_Cleanup(void);
 
-typedef struct
-{
-    uint32_t firstVertexOffset;
-    uint32_t numVertices;
-    uint32_t textureId;
-} RenderBatchUnit;
-
-typedef struct
-{
-    uint32_t numActiveVertices;
-    Vertex *vertices;
-
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    DynamicArray renderBatchUnits;
-} RenderBatch;
-
+void Ignis_Graphics_BeginDrawing(void);
+void Ignis_Graphics_EndDrawing(void);
 void Ignis_Graphics_Draw(void);
 
-void Ignis_Graphics_DrawCircle(RenderBatch *renderBatch, Vector2 position, float radius, Vector2 origin, Color color);
-void Ignis_Graphics_DrawLine(RenderBatch *renderBatch, Vector2 start, Vector2 end, float width, Color color);
-void Ignis_Graphics_DrawTexture(RenderBatch *renderBatch, Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint);
+void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
+void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color color);
+void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint);
+
+int Ignis_Graphics_LoadTextureFromData(const uint8_t *pixels, int width, int height, int numChannels);
+void Ignis_Graphics_UnloadTexture(int textureId);
 
 #endif // IGNIS_GRAPHICS_H
 

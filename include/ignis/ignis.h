@@ -18,10 +18,6 @@ typedef struct
     int width;
     int height;
     int numChannels;
-
-    VkImage image;
-    VkDeviceMemory memory;
-    VkImageView imageView;
 } Texture;
 
 // Font data
