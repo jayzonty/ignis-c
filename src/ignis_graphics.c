@@ -1,7 +1,6 @@
 #include "ignis_graphics.h"
 
 #include "dynamic_array.h"
-#include "ignis/ignis_math.h"
 #include "ignis_vulkan.h"
 
 #define GLFW_INCLUDE_NONE
