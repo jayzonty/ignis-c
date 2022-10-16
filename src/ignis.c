@@ -5,6 +5,9 @@
 #include "ignis_graphics.h"
 #include "ignis_vulkan.h"
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -75,6 +78,7 @@ static uint32_t MAX_VERTICES_PER_BATCH = 10000;
 static Texture defaultTexture = { 0 };
 
 static DynamicArray fontTextures = { 0 };
+static DynamicArray loadedFontFaces = { 0 };
 
 typedef enum
 {
@@ -181,6 +185,7 @@ bool IgnisInit(void)
             printf("[Engine] Failed to initialize Freetype library!\n");
         }
         DynamicArrayInit(&fontTextures, sizeof(FontTextureData));
+        DynamicArrayInit(&loadedFontFaces, sizeof(FT_Face));
     }
     else
     {
@@ -205,6 +210,7 @@ void IgnisCleanup(void)
             FontTextureData *textureData = (FontTextureData*)DynamicArrayGetElementAt(&fontTextures, i);
             UnloadTexture(textureData->texture);
         }
+        DynamicArrayFree(&loadedFontFaces);
         DynamicArrayFree(&fontTextures);
 
         FT_Done_FreeType(context.freetypeLibrary);
@@ -480,13 +486,14 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
  */
 void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color)
 {
+    FT_Face fontFace = *((FT_Face*)DynamicArrayGetElementAt(&loadedFontFaces, font.id));
     FontTextureData *fontData = NULL;
 
     size_t numCachedFontTextures = DynamicArrayGetSize(&fontTextures);
     for (size_t i = 0; i < numCachedFontTextures; ++i)
     {
         FontTextureData *fontTextureData = (FontTextureData*)DynamicArrayGetElementAt(&fontTextures, i);
-        if ((fontTextureData->face == font.face) && (fontTextureData->fontSize == fontSize))
+        if ((fontTextureData->face == fontFace) && (fontTextureData->fontSize == fontSize))
         {
             fontData = fontTextureData;
             break;
@@ -497,11 +504,11 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
     {
         printf("[Engine] No cached font data found. Generating new font data...\n");
         FontTextureData data = { 0 };
-        data.face = font.face;
+        data.face = fontFace;
         data.fontSize = fontSize;
 
-        FT_Set_Pixel_Sizes(font.face, 0, fontSize);
-        int totalHeight = (font.face->size->metrics.height >> 6) * ceilf(sqrtf(MAX_GLYPHS));
+        FT_Set_Pixel_Sizes(fontFace, 0, fontSize);
+        int totalHeight = (fontFace->size->metrics.height >> 6) * ceilf(sqrtf(MAX_GLYPHS));
         int glyphAtlasSize = 1;
         while (glyphAtlasSize < totalHeight) // Look for the nearest power of 2
         {
@@ -514,45 +521,45 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
         int x = 0, y = 0;
         for (unsigned char c = 0; c < MAX_GLYPHS; ++c)
         {
-            if (FT_Load_Char(font.face, c, FT_LOAD_RENDER) != 0)
+            if (FT_Load_Char(fontFace, c, FT_LOAD_RENDER) != 0)
             {
                 continue;
             }
 
-            if ((x + font.face->glyph->bitmap.width) >= glyphAtlasSize)
+            if ((x + fontFace->glyph->bitmap.width) >= glyphAtlasSize)
             {
                 x = 0;
-                y += font.face->size->metrics.height >> 6;
+                y += fontFace->size->metrics.height >> 6;
             }
 
-            data.glyphsData[c].size.x = font.face->glyph->bitmap.width;
-            data.glyphsData[c].size.y = font.face->glyph->bitmap.rows;
-            data.glyphsData[c].bearing.x = font.face->glyph->bitmap_left;
-            data.glyphsData[c].bearing.y = font.face->glyph->bitmap_top;
-            data.glyphsData[c].advance = (float)(font.face->glyph->advance.x >> 6);
+            data.glyphsData[c].size.x = fontFace->glyph->bitmap.width;
+            data.glyphsData[c].size.y = fontFace->glyph->bitmap.rows;
+            data.glyphsData[c].bearing.x = fontFace->glyph->bitmap_left;
+            data.glyphsData[c].bearing.y = fontFace->glyph->bitmap_top;
+            data.glyphsData[c].advance = (float)(fontFace->glyph->advance.x >> 6);
 
             data.glyphsData[c].uvRect.x = (float)x / (float)glyphAtlasSize;
             data.glyphsData[c].uvRect.y = (float)y / (float)glyphAtlasSize;
             data.glyphsData[c].uvRect.width = data.glyphsData[c].size.x / (float)glyphAtlasSize;
             data.glyphsData[c].uvRect.height = data.glyphsData[c].size.y / (float)glyphAtlasSize;
 
-            for (int row = 0; row < font.face->glyph->bitmap.rows; ++row)
+            for (int row = 0; row < fontFace->glyph->bitmap.rows; ++row)
             {
-                for (int col = 0; col < font.face->glyph->bitmap.width; ++col)
+                for (int col = 0; col < fontFace->glyph->bitmap.width; ++col)
                 {
-                    int atlasRow = font.face->glyph->bitmap.rows - row - 1;
+                    int atlasRow = fontFace->glyph->bitmap.rows - row - 1;
                     int atlasIndex = ((y + atlasRow) * glyphAtlasSize + (x + col)) * 4;
                     //printf("row = %d, col = %d, atlasIndex = %d\n", row, col, atlasIndex);
-                    int bufferIndex = row * font.face->glyph->bitmap.width + col;
+                    int bufferIndex = row * fontFace->glyph->bitmap.width + col;
 
                     pixels[atlasIndex + 0] = 255;
                     pixels[atlasIndex + 1] = 255;
                     pixels[atlasIndex + 2] = 255;
-                    pixels[atlasIndex + 3] = font.face->glyph->bitmap.buffer[bufferIndex];
+                    pixels[atlasIndex + 3] = fontFace->glyph->bitmap.buffer[bufferIndex];
                 }
             }
 
-            x += font.face->glyph->bitmap.width;
+            x += fontFace->glyph->bitmap.width;
         }
 
         data.texture = LoadTextureFromData(pixels, glyphAtlasSize, glyphAtlasSize, 4);
@@ -734,10 +741,15 @@ void UnloadTexture(Texture texture)
 Font LoadFont(const char *fontFilePath)
 {
     Font ret = { 0 };
-    if (FT_New_Face(context.freetypeLibrary, fontFilePath, 0, &ret.face) != 0)
+
+    FT_Face face;
+    if (FT_New_Face(context.freetypeLibrary, fontFilePath, 0, &face) != 0)
     {
         printf("[Engine] Failed to load font at path %s\n", fontFilePath);
     }
+
+    ret.id = DynamicArrayGetSize(&loadedFontFaces);
+    DynamicArrayAdd(&loadedFontFaces, &face);
 
     return ret;
 }
@@ -748,6 +760,7 @@ Font LoadFont(const char *fontFilePath)
  */
 void UnloadFont(Font font)
 {
-    FT_Done_Face(font.face);
+    FT_Face *face = (FT_Face*)DynamicArrayGetElementAt(&loadedFontFaces, font.id);
+    FT_Done_Face(*face);
 }
 

@@ -3,11 +3,6 @@
 
 #include "ignis_math.h"
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
-#include <vulkan/vulkan_core.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -23,7 +18,7 @@ typedef struct
 // Font data
 typedef struct
 {
-    FT_Face face;
+    int id;
 } Font;
 
 // Color

@@ -10,6 +10,9 @@
 #include <vulkan/vulkan.h>
 
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_NUM_TEXTURE_DESCRIPTORS 256
 #define MAX_VERTICES_PER_BATCH 10000
