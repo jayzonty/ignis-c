@@ -111,9 +111,14 @@ typedef struct
     DynamicArray renderBatchUnits;
 } RenderBatch;
 
+typedef struct
+{
+    int minVertexCount;
+} RenderBatchRequestInfo;
+
 static VulkanContext vulkanContext = { 0 };
 
-static RenderBatch defaultRenderBatch = { 0 };
+static DynamicArray renderBatches = { 0 };
 
 static uint32_t nextTextureId = 0;
 
@@ -142,6 +147,52 @@ bool CheckDeviceExtensionSupport(VkPhysicalDevice device, uint32_t numRequiredEx
 bool GetQueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t *graphicsQueueFamilyIndex, uint32_t *presentQueueFamilyIndex);
 bool CreateShaderModule(const char *shaderFilePath, VkDevice device, VkShaderModule *outShaderModule);
 
+RenderBatch* RequestRenderBatch(RenderBatchRequestInfo* info)
+{
+    RenderBatch* ret = NULL;
+
+    size_t numBatches = DynamicArrayGetSize(&renderBatches);
+    for (size_t i = 0; i < numBatches; ++i)
+    {
+        RenderBatch* renderBatch = DynamicArrayGetElementAt(&renderBatches, i);
+        if (renderBatch->numActiveVertices + info->minVertexCount <= MAX_VERTICES_PER_BATCH)
+        {
+            ret = renderBatch;
+            break;
+        }
+    }
+
+    if (ret == NULL)
+    {
+        RenderBatch renderBatch = { 0 };
+        DynamicArrayAdd(&renderBatches, &renderBatch);
+
+        ret = (RenderBatch*)DynamicArrayGetElementAt(&renderBatches, numBatches);
+
+        ret->numActiveVertices = 0;
+        ret->vertices = (Vertex*)malloc(sizeof(Vertex) * MAX_VERTICES_PER_BATCH);
+        DynamicArrayInit(&ret->renderBatchUnits, sizeof(RenderBatchUnit));
+
+        bool result = CreateBuffer
+        (
+            vulkanContext.physicalDevice,
+            vulkanContext.logicalDevice,
+            sizeof(Vertex) * MAX_VERTICES_PER_BATCH,
+            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            &ret->vertexBuffer,
+            &ret->vertexBufferMemory
+        );
+        if (!result)
+        {
+            printf("[Engine] Failed to create vertex buffer for the default render batch!\n");
+            return false;
+        }
+    }
+
+    return ret;
+}
+
 bool Ignis_Graphics_Init(int windowWidth, int windowHeight, GLFWwindow *windowHandle)
 {
     _windowWidth = windowWidth;
@@ -154,28 +205,7 @@ bool Ignis_Graphics_Init(int windowWidth, int windowHeight, GLFWwindow *windowHa
         return false;
     }
 
-    // Set up default render batch
-    {
-        defaultRenderBatch.numActiveVertices = 0;
-        defaultRenderBatch.vertices = (Vertex*)malloc(sizeof(Vertex) * MAX_VERTICES_PER_BATCH);
-        DynamicArrayInit(&defaultRenderBatch.renderBatchUnits, sizeof(RenderBatchUnit));
-
-        bool result = CreateBuffer
-        (
-            vulkanContext.physicalDevice,
-            vulkanContext.logicalDevice,
-            sizeof(Vertex) * MAX_VERTICES_PER_BATCH,
-            VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            &defaultRenderBatch.vertexBuffer,
-            &defaultRenderBatch.vertexBufferMemory
-        );
-        if (!result)
-        {
-            printf("[Engine] Failed to create vertex buffer for the default render batch!\n");
-            return false;
-        }
-    }
+    DynamicArrayInit(&renderBatches, sizeof(RenderBatch));
 
     return true;
 }
@@ -189,26 +219,38 @@ void Ignis_Graphics_Cleanup(void)
 {
     vkDeviceWaitIdle(vulkanContext.logicalDevice);
 
-    DynamicArrayFree(&defaultRenderBatch.renderBatchUnits);
-
-    if (defaultRenderBatch.vertexBuffer != VK_NULL_HANDLE)
+    size_t numRenderBatches = DynamicArrayGetSize(&renderBatches);
+    for (size_t i = 0; i < numRenderBatches; ++i)
     {
-        vkDestroyBuffer(vulkanContext.logicalDevice, defaultRenderBatch.vertexBuffer, NULL);
-        defaultRenderBatch.vertexBuffer = VK_NULL_HANDLE;
-        vkFreeMemory(vulkanContext.logicalDevice, defaultRenderBatch.vertexBufferMemory, NULL);
-        defaultRenderBatch.vertexBufferMemory = VK_NULL_HANDLE;
-    }
+        RenderBatch *renderBatch = (RenderBatch*)DynamicArrayGetElementAt(&renderBatches, i);
+        DynamicArrayFree(&renderBatch->renderBatchUnits);
 
-    free(defaultRenderBatch.vertices);
-    defaultRenderBatch.vertices = NULL;
+        if (renderBatch->vertexBuffer != VK_NULL_HANDLE)
+        {
+            vkDestroyBuffer(vulkanContext.logicalDevice, renderBatch->vertexBuffer, NULL);
+            renderBatch->vertexBuffer = VK_NULL_HANDLE;
+            vkFreeMemory(vulkanContext.logicalDevice, renderBatch->vertexBufferMemory, NULL);
+            renderBatch->vertexBufferMemory = VK_NULL_HANDLE;
+        }
+
+        free(renderBatch->vertices);
+        renderBatch->vertices = NULL;
+    }
+    DynamicArrayFree(&renderBatches);
 
     ShutdownVulkan();
 }
 
 void Ignis_Graphics_BeginDrawing()
 {
-    defaultRenderBatch.numActiveVertices = 0;
-    DynamicArrayClear(&defaultRenderBatch.renderBatchUnits);
+    size_t numRenderBatches = DynamicArrayGetSize(&renderBatches);
+    for (size_t i = 0; i < numRenderBatches; ++i)
+    {
+        RenderBatch* renderBatch = (RenderBatch*)DynamicArrayGetElementAt(&renderBatches, i);
+
+        renderBatch->numActiveVertices = 0;
+        DynamicArrayClear(&renderBatch->renderBatchUnits);
+    }
 }
 
 int RenderBatchUnitCompFunc(const void *a, const void *b)
@@ -220,37 +262,43 @@ int RenderBatchUnitCompFunc(const void *a, const void *b)
 
 void Ignis_Graphics_EndDrawing()
 {
-    // Transform vertices to NDC
-    // TODO: Transform via a projection matrix instead
-    for (size_t i = 0; i < defaultRenderBatch.numActiveVertices; ++i)
+    size_t numRenderBatches = DynamicArrayGetSize(&renderBatches);
+    for (size_t i = 0; i < numRenderBatches; ++i)
     {
-        defaultRenderBatch.vertices[i].x = (defaultRenderBatch.vertices[i].x / _windowWidth) * 2.0f - 1.0f;
-        defaultRenderBatch.vertices[i].y = (defaultRenderBatch.vertices[i].y / _windowHeight) * 2.0f - 1.0f;
+        RenderBatch* renderBatch = (RenderBatch*)DynamicArrayGetElementAt(&renderBatches, i);
+
+        // Transform vertices to NDC
+        // TODO: Transform via a projection matrix instead
+        for (size_t i = 0; i < renderBatch->numActiveVertices; ++i)
+        {
+            renderBatch->vertices[i].x = (renderBatch->vertices[i].x / _windowWidth) * 2.0f - 1.0f;
+            renderBatch->vertices[i].y = (renderBatch->vertices[i].y / _windowHeight) * 2.0f - 1.0f;
+        }
+
+        qsort
+        (
+            DynamicArrayGetData(&renderBatch->renderBatchUnits),
+            DynamicArrayGetSize(&renderBatch->renderBatchUnits),
+            sizeof(RenderBatchUnit),
+            RenderBatchUnitCompFunc
+        );
+
+        VkDeviceSize bufferSize = sizeof(Vertex) * renderBatch->numActiveVertices;
+
+        void *mem;
+        vkMapMemory(vulkanContext.logicalDevice, renderBatch->vertexBufferMemory, 0, bufferSize, 0, &mem);
+
+        size_t offset = 0;
+        size_t numRenderBatchUnits = DynamicArrayGetSize(&renderBatch->renderBatchUnits);
+        for (size_t i = 0; i < numRenderBatchUnits; ++i)
+        {
+            RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&renderBatch->renderBatchUnits, i);
+            memcpy(mem + offset * sizeof(Vertex), renderBatch->vertices + unit->firstVertexOffset, sizeof(Vertex) * unit->numVertices);
+            offset += unit->numVertices;
+        }
+
+        vkUnmapMemory(vulkanContext.logicalDevice, renderBatch->vertexBufferMemory);
     }
-
-    qsort
-    (
-        DynamicArrayGetData(&defaultRenderBatch.renderBatchUnits),
-        DynamicArrayGetSize(&defaultRenderBatch.renderBatchUnits),
-        sizeof(RenderBatchUnit),
-        RenderBatchUnitCompFunc
-    );
-
-    VkDeviceSize bufferSize = sizeof(Vertex) * defaultRenderBatch.numActiveVertices;
-
-    void *mem;
-    vkMapMemory(vulkanContext.logicalDevice, defaultRenderBatch.vertexBufferMemory, 0, bufferSize, 0, &mem);
-
-    size_t offset = 0;
-    size_t numRenderBatchUnits = DynamicArrayGetSize(&defaultRenderBatch.renderBatchUnits);
-    for (size_t i = 0; i < numRenderBatchUnits; ++i)
-    {
-        RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&defaultRenderBatch.renderBatchUnits, i);
-        memcpy(mem + offset * sizeof(Vertex), defaultRenderBatch.vertices + unit->firstVertexOffset, sizeof(Vertex) * unit->numVertices);
-        offset += unit->numVertices;
-    }
-
-    vkUnmapMemory(vulkanContext.logicalDevice, defaultRenderBatch.vertexBufferMemory);
 }
 
 void Ignis_Graphics_Draw(void)
@@ -339,39 +387,45 @@ void Ignis_Graphics_Draw(void)
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanContext.graphicsPipeline);
 
-    VkDeviceSize offset = 0;
-    VkBuffer vertexBuffers[1] = { defaultRenderBatch.vertexBuffer };
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, &offset);
-
-    uint32_t vertexOffset = 0;
-    uint32_t numVertices = 0;
-    uint32_t prevTex = 0;
-    size_t numRenderBatchUnits = DynamicArrayGetSize(&defaultRenderBatch.renderBatchUnits);
-    for (size_t i = 0; i < numRenderBatchUnits; ++i)
+    size_t numRenderBatches = DynamicArrayGetSize(&renderBatches);
+    for (size_t i = 0; i < numRenderBatches; ++i)
     {
-        RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&defaultRenderBatch.renderBatchUnits, i);
-        if (i == 0)
+        RenderBatch* renderBatch = (RenderBatch*)DynamicArrayGetElementAt(&renderBatches, i);
+
+        VkDeviceSize offset = 0;
+        VkBuffer vertexBuffers[1] = { renderBatch->vertexBuffer };
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, &offset);
+
+        uint32_t vertexOffset = 0;
+        uint32_t numVertices = 0;
+        uint32_t prevTex = 0;
+        size_t numRenderBatchUnits = DynamicArrayGetSize(&renderBatch->renderBatchUnits);
+        for (size_t j = 0; j < numRenderBatchUnits; ++j)
         {
+            RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&renderBatch->renderBatchUnits, j);
+            if (j == 0)
+            {
+                prevTex = unit->textureId;
+            }
+
+            if (unit->textureId != prevTex)
+            {
+                vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanContext.graphicsPipelineLayout, 0, 1, &vulkanContext.textureDescriptorSets[prevTex], 0, NULL);
+                vkCmdDraw(commandBuffer, numVertices, 1, vertexOffset, 0);
+
+                vertexOffset += numVertices;
+                numVertices = 0;
+            }
+
+            numVertices += unit->numVertices;
             prevTex = unit->textureId;
         }
 
-        if (unit->textureId != prevTex)
+        if (numVertices > 0)
         {
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanContext.graphicsPipelineLayout, 0, 1, &vulkanContext.textureDescriptorSets[prevTex], 0, NULL);
             vkCmdDraw(commandBuffer, numVertices, 1, vertexOffset, 0);
-
-            vertexOffset += numVertices;
-            numVertices = 0;
         }
-
-        numVertices += unit->numVertices;
-        prevTex = unit->textureId;
-    }
-
-    if (numVertices > 0)
-    {
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanContext.graphicsPipelineLayout, 0, 1, &vulkanContext.textureDescriptorSets[prevTex], 0, NULL);
-        vkCmdDraw(commandBuffer, numVertices, 1, vertexOffset, 0);
     }
 
     vkCmdEndRenderPass(commandBuffer);
@@ -440,22 +494,12 @@ void Ignis_Graphics_Draw(void)
 
 void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
 {
-    RenderBatch *renderBatch = &defaultRenderBatch;
-
     const uint32_t NUM_SEGMENTS = 90;
     const uint32_t CIRCLE_VERTEX_COUNT = NUM_SEGMENTS * 3;
 
-    if ((renderBatch->vertices == NULL) || (renderBatch->vertexBuffer == VK_NULL_HANDLE))
-    {
-        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
-        return;
-    }
-
-    if (renderBatch->numActiveVertices + CIRCLE_VERTEX_COUNT > MAX_VERTICES_PER_BATCH)
-    {
-        printf("[Engine] Not enough vertices in the default render batch to draw a new circle!\n");
-        return;
-    }
+    RenderBatchRequestInfo renderBatchInfo = { 0 };
+    renderBatchInfo.minVertexCount = CIRCLE_VERTEX_COUNT;
+    RenderBatch *renderBatch = RequestRenderBatch(&renderBatchInfo);
 
     float segmentAngle = (M_PI * 2.0f) / NUM_SEGMENTS;
     uint32_t index = renderBatch->numActiveVertices;
@@ -513,19 +557,9 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
 
 void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color color)
 {
-    RenderBatch *renderBatch = &defaultRenderBatch;
-
-    if ((renderBatch->vertices == NULL) || (renderBatch->vertexBuffer == VK_NULL_HANDLE))
-    {
-        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
-        return;
-    }
-
-    if (renderBatch->numActiveVertices + 6 > MAX_VERTICES_PER_BATCH)
-    {
-        printf("[Engine] Not enough vertices in the default render batch to draw a new circle!\n");
-        return;
-    }
+    RenderBatchRequestInfo renderBatchInfo = { 0 };
+    renderBatchInfo.minVertexCount = 6;
+    RenderBatch *renderBatch = RequestRenderBatch(&renderBatchInfo);
 
     Vector2 d;
     d.x = end.x - start.x;
@@ -570,21 +604,11 @@ void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color colo
 
 void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint)
 {
-    RenderBatch *renderBatch = &defaultRenderBatch;
+    RenderBatchRequestInfo renderBatchInfo = { 0 };
+    renderBatchInfo.minVertexCount = 6;
+    RenderBatch *renderBatch = RequestRenderBatch(&renderBatchInfo);
     if (renderBatch == NULL)
     {
-        return;
-    }
-
-    if ((renderBatch->vertices == NULL) || (renderBatch->vertexBuffer == VK_NULL_HANDLE))
-    {
-        printf("[Engine] Default render batch's vertex buffer is not initialized!\n");
-        return;
-    }
-
-    if (renderBatch->numActiveVertices + 6 > MAX_VERTICES_PER_BATCH)
-    {
-        printf("[Engine] Not enough vertices in the default render batch to draw a new rectangle!\n");
         return;
     }
 
