@@ -15,6 +15,18 @@ Vector2 Vector2Add(Vector2 a, Vector2 b)
 }
 
 /**
+ * @brief Subtraction between two Vector2's.
+ * @param[in] a First vector
+ * @param[in] b Second vector
+ * @return Difference of the two vectors
+ */
+Vector2 Vector2Subtract(Vector2 a, Vector2 b)
+{
+    Vector2 ret = { a.x - b.x, a.y - b.y };
+    return ret;
+}
+
+/**
  * @brief Scales the specified vector by the specified scale value.
  * @param[in] v Vector
  * @param[in] s Scale value @return Scaled vector
@@ -31,7 +43,7 @@ Vector2 Vector2Scale(Vector2 v, float s)
  * @param[in] b Scond vector
  * @return Dot product
  */
-float Vector2Dot(Vector2 a, Vector2 b)
+float Vector2DotProduct(Vector2 a, Vector2 b)
 {
     return a.x * b.x + a.y * b.y;
 }
@@ -43,7 +55,7 @@ float Vector2Dot(Vector2 a, Vector2 b)
  */
 float Vector2SquaredMagnitude(Vector2 v)
 {
-    return Vector2Dot(v, v);
+    return Vector2DotProduct(v, v);
 }
 
 /**
@@ -72,6 +84,26 @@ Vector2 Vector2Normalize(Vector2 v)
     return v;
 }
 
+/**
+ * @brief Gets the unit vector representing the direction from the specified source to the specified destination.
+ * @param[in] source Source point
+ * @param[in] destination Destination point
+ * @return Unit vector representing the direction from the source to the destination
+ */
+Vector2 Vector2Direction(Vector2 source, Vector2 destination)
+{
+    Vector2 ret = Vector2Subtract(destination, source);
+    ret = Vector2Normalize(ret);
+    return ret;
+}
+
+/**
+ * @brief Clamps the specified value between the specified minimum and maximum.
+ * @param[in] val Value to clamp
+ * @param[in] min Minimum value
+ * @param[in] max Maximum value
+ * @return Clamped value
+ */
 uint32_t Clamp(uint32_t val, uint32_t min, uint32_t max)
 {
     if (val < min)
@@ -85,6 +117,12 @@ uint32_t Clamp(uint32_t val, uint32_t min, uint32_t max)
     return val;
 }
 
+/**
+ * @brief Gets the minimum between the two numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Minimum between the two numbers
+ */
 uint32_t Min(uint32_t a, uint32_t b)
 {
     if (a <= b)
@@ -94,6 +132,12 @@ uint32_t Min(uint32_t a, uint32_t b)
     return b;
 }
 
+/**
+ * @brief Gets the maximum between the two numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Maximum between the two numbers
+ */
 uint32_t Max(uint32_t a, uint32_t b)
 {
     if (a >= b)
@@ -102,3 +146,4 @@ uint32_t Max(uint32_t a, uint32_t b)
     }
     return b;
 }
+

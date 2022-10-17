@@ -44,6 +44,14 @@ extern "C"
 Vector2 Vector2Add(Vector2 a, Vector2 b);
 
 /**
+ * @brief Subtraction between two Vector2's.
+ * @param[in] a First vector
+ * @param[in] b Second vector
+ * @return Difference of the two vectors
+ */
+Vector2 Vector2Subtract(Vector2 a, Vector2 b);
+
+/**
  * @brief Scales the specified vector by the specified scale value.
  * @param[in] v Vector
  * @param[in] s Scale value
@@ -57,7 +65,7 @@ Vector2 Vector2Scale(Vector2 v, float s);
  * @param[in] b Scond vector
  * @return Dot product
  */
-float Vector2Dot(Vector2 a, Vector2 b);
+float Vector2DotProduct(Vector2 a, Vector2 b);
 
 /**
  * @brief Gets the squared magnitude of the specified vector.
@@ -79,6 +87,14 @@ float Vector2Magnitude(Vector2 v);
  * @return Normalized version of the specified vector
  */
 Vector2 Vector2Normalize(Vector2 v);
+
+/**
+ * @brief Gets the unit vector representing the direction from the specified source to the specified destination.
+ * @param[in] source Source point
+ * @param[in] destination Destination point
+ * @return Unit vector representing the direction from the source to the destination
+ */
+Vector2 Vector2Direction(Vector2 source, Vector2 destination);
 
 // ----------------------------------------
 // Miscellaneous utility operations
