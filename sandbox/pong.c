@@ -152,12 +152,12 @@ int main(int argc, char *argv[])
             Rect paddle1Rect = { paddle1Pos.x, paddle1Pos.y, paddleSize.x, paddleSize.y };
             Rect paddle2Rect = { paddle2Pos.x, paddle2Pos.y, paddleSize.x, paddleSize.y };
             Rect ballRect = { ballPos.x, ballPos.y, ballSize.x, ballSize.y };
-            if (CheckOverlap(paddle1Rect, ballRect))
+            if (CheckRectsOverlap(paddle1Rect, ballRect))
             {
                 ballPos.x = paddle1Pos.x + paddleSize.x;
                 ballDirection.x = -ballDirection.x;
             }
-            else if (CheckOverlap(paddle2Rect, ballRect))
+            else if (CheckRectsOverlap(paddle2Rect, ballRect))
             {
                 ballPos.x = paddle2Pos.x - ballSize.x;
                 ballDirection.x = -ballDirection.x;

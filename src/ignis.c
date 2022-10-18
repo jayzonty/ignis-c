@@ -606,7 +606,7 @@ void Draw(void)
  * @param[in] rectB Second rectangle
  * @return True if the two rectangles are overlapping
  */
-bool CheckOverlap(Rect rectA, Rect rectB)
+bool CheckRectsOverlap(Rect rectA, Rect rectB)
 {
     Vector2 minA = { rectA.x, rectA.y };
     Vector2 maxA = { rectA.x + rectA.width, rectA.y + rectA.height };
@@ -619,6 +619,22 @@ bool CheckOverlap(Rect rectA, Rect rectB)
     }
 
     return true;
+}
+
+/**
+ * @brief Checks whether the two specified circles are overlapping.
+ * @param[in] centerA Center of the first circle
+ * @param[in] radiusA Radius of the first circle
+ * @param[in] centerB Center of the second circle
+ * @param[in] radiusB Radius of the second circle
+ * @return True if the two circles are overlapping
+ */
+bool CheckCirclesOverlap(Vector2 centerA, float radiusA, Vector2 centerB, float radiusB)
+{
+    Vector2 D = Vector2Subtract(centerA, centerB);
+    float sqrDist = Vector2DotProduct(D, D);
+    float radiusSqr = (radiusA + radiusB) * (radiusA + radiusB);
+    return sqrDist < radiusSqr;
 }
 
 /**
