@@ -85,6 +85,30 @@ Vector2 Vector2Normalize(Vector2 v)
 }
 
 /**
+ * @brief Gets the squared distance between two points.
+ * @param[in] a First point
+ * @param[in] b Second point
+ * @return Squared distance between points a and b.
+ */
+float Vector2SquaredDistance(Vector2 a, Vector2 b)
+{
+    Vector2 D = Vector2Subtract(a, b);
+    return Vector2SquaredMagnitude(D);
+}
+
+/**
+ * @brief Gets the distance between two points.
+ * @param[in] a First point
+ * @param[in] b Second point
+ * @return Distance between points a and b.
+ */
+float Vector2Distance(Vector2 a, Vector2 b)
+{
+    Vector2 D = Vector2Subtract(a, b);
+    return Vector2Magnitude(D);
+}
+
+/**
  * @brief Gets the unit vector representing the direction from the specified source to the specified destination.
  * @param[in] source Source point
  * @param[in] destination Destination point
