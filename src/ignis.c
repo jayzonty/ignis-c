@@ -418,6 +418,15 @@ Vector2 GetMousePosition()
     return ret;
 }
 
+/**
+ * @brief Sets the color to be used to clear the background.
+ * @param[in] color Clear color
+ */
+void SetClearColor(Color color)
+{
+    Ignis_Graphics_SetClearColor(color);
+}
+
 /** 
  * @brief Prepares the renderer for accepting drawing commands.
  */

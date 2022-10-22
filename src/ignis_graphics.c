@@ -128,6 +128,8 @@ static int _windowWidth = 0;
 static int _windowHeight = 0;
 static GLFWwindow* _windowHandle = NULL;
 
+static Color clearColor = { 0, 0, 0, 255 };
+
 // ----------------------------------------
 // Vulkan Function Declarations
 // ----------------------------------------
@@ -239,6 +241,11 @@ void Ignis_Graphics_Cleanup(void)
     DynamicArrayFree(&renderBatches);
 
     ShutdownVulkan();
+}
+
+void Ignis_Graphics_SetClearColor(Color color)
+{
+    clearColor = color;
 }
 
 void Ignis_Graphics_BeginDrawing()
@@ -358,10 +365,10 @@ void Ignis_Graphics_Draw(void)
     VkRect2D renderArea = { .offset = { .x = 0, .y = 0 }, .extent = vulkanContext.swapchainImageExtent };
     renderPassBeginInfo.renderArea = renderArea;
     VkClearValue clearValues[2] = { 0 };
-    clearValues[0].color.float32[0] = 0.0f;
-    clearValues[0].color.float32[1] = 0.0f;
-    clearValues[0].color.float32[2] = 0.0f;
-    clearValues[0].color.float32[3] = 1.0f;
+    clearValues[0].color.float32[0] = clearColor.r / 255.0f;
+    clearValues[0].color.float32[1] = clearColor.g / 255.0f;
+    clearValues[0].color.float32[2] = clearColor.b / 255.0f;
+    clearValues[0].color.float32[3] = clearColor.a / 255.0f;
     clearValues[1].depthStencil.depth = 1.0f;
     clearValues[1].depthStencil.stencil = 0;
     renderPassBeginInfo.clearValueCount = 2;

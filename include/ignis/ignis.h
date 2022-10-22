@@ -192,6 +192,12 @@ Vector2 GetMousePosition();
 // Drawing Functions
 // ----------------------------------------
 
+/**
+ * @brief Sets the color to be used to clear the background.
+ * @param[in] color Clear color
+ */
+void SetClearColor(Color color);
+
 /** 
  * @brief Prepares the renderer for accepting drawing commands.
  */
