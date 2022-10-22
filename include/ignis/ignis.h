@@ -117,6 +117,12 @@ bool IsWindowClosed(void);
 float GetCurrentTime(void);
 
 /**
+ * @brief Gets the time elapsed between the previous and the current frame.
+ * @return Time elapsed between the previous and current frame
+ */
+float GetDeltaTime(void);
+
+/**
  * @brief Sets the target framerate of the application.
  * @param[in] targetFPS Target framerate
  */

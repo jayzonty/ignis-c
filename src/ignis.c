@@ -278,6 +278,15 @@ float GetCurrentTime(void)
 }
 
 /**
+ * @brief Gets the time elapsed between the previous and the current frame.
+ * @return Time elapsed between the previous and current frame
+ */
+float GetDeltaTime(void)
+{
+    return context.currentFrameStartTime - context.previousFrameStartTime;
+}
+
+/**
  * @brief Sets the target framerate of the application.
  * @param[in] targetFPS Target framerate
  */
