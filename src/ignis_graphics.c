@@ -2,6 +2,7 @@
 
 #include "dynamic_array.h"
 #include "ignis_vulkan.h"
+#include <vulkan/vulkan_core.h>
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -89,7 +90,7 @@ typedef struct
 typedef struct 
 {
     float x, y, z;
-    float r, g, b;
+    float r, g, b, a;
     float u, v;
 } Vertex;
 
@@ -521,6 +522,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
         renderBatch->vertices[index].r = color.r / 255.0f;
         renderBatch->vertices[index].g = color.g / 255.0f;
         renderBatch->vertices[index].b = color.b / 255.0f;
+        renderBatch->vertices[index].a = color.a / 255.0f;
         renderBatch->vertices[index].u = 0.0f;
         renderBatch->vertices[index].v = 0.0f;
         ++index;
@@ -534,6 +536,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
         renderBatch->vertices[index].r = color.r / 255.0f;
         renderBatch->vertices[index].g = color.g / 255.0f;
         renderBatch->vertices[index].b = color.b / 255.0f;
+        renderBatch->vertices[index].a = color.a / 255.0f;
         renderBatch->vertices[index].u = 1.0f;
         renderBatch->vertices[index].v = 1.0f;
         ++index;
@@ -547,6 +550,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
         renderBatch->vertices[index].r = color.r / 255.0f;
         renderBatch->vertices[index].g = color.g / 255.0f;
         renderBatch->vertices[index].b = color.b / 255.0f;
+        renderBatch->vertices[index].a = color.a / 255.0f;
         renderBatch->vertices[index].u = 0.0f;
         renderBatch->vertices[index].v = 1.0f;
         ++index;
@@ -594,6 +598,7 @@ void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color colo
         renderBatch->vertices[index + i].r = color.r / 255.0f;
         renderBatch->vertices[index + i].g = color.g / 255.0f;
         renderBatch->vertices[index + i].b = color.b / 255.0f;
+        renderBatch->vertices[index + i].a = color.a / 255.0f;
 
         renderBatch->vertices[index + i].u = u[i];
         renderBatch->vertices[index + i].v = v[i];
@@ -636,6 +641,7 @@ void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, 
         renderBatch->vertices[index].r = tint.r / 255.0f;
         renderBatch->vertices[index].g = tint.g / 255.0f;
         renderBatch->vertices[index].b = tint.b / 255.0f;
+        renderBatch->vertices[index].a = tint.a / 255.0f;
         renderBatch->vertices[index].u = uvRect.x + uvRect.width * dx[i];
         renderBatch->vertices[index].v = uvRect.y + uvRect.height * dy[i];
     }
@@ -1475,7 +1481,7 @@ bool InitGraphicsPipeline(void)
     colorAttributeDescription.binding = 0;
     colorAttributeDescription.location = 1;
     colorAttributeDescription.offset = offsetof(Vertex, r);
-    colorAttributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+    colorAttributeDescription.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 
     // UV
     VkVertexInputAttributeDescription uvAttributeDescription = { 0 };
