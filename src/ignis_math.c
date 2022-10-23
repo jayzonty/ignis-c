@@ -171,3 +171,15 @@ uint32_t Max(uint32_t a, uint32_t b)
     return b;
 }
 
+/**
+ * @brief Linearly interpolates by a factor t between two float values.
+ * @param[in] a First value
+ * @param[in] b Second value
+ * @param[in] t Interpolation factor
+ * @return Result of linear interpolation
+ */
+float Lerp_Float(float a, float b, float t)
+{
+    return a * (1.0f - t) + b * t;
+}
+
