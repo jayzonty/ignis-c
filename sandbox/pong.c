@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 
         if (currentState == STATE_START)
         {
-            Vector2 titlePos = { 230.0f, 350.0f };
+            Vector2 titlePos = { 230.0f, 290.0f };
             int titleFontSize = 128;
             Color titleColor = { 255, 255, 255, 255 };
             DrawText(titlePos, "PONG", font, titleFontSize, titleColor);
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
         EndFrame();
     }
 
-    UnloadFont(font);
+    UnloadFont(&font);
 
     IgnisCleanup();
 

@@ -350,13 +350,13 @@ void UnloadTexture(Texture texture);
  * @param[in] fontFilePath Font file path
  * @return Font data
  */
-Font LoadFont(const char *fontFilePath);
+Font LoadFont(const char* fontFilePath);
 
 /**
  * @brief Unloads the specified font data.
  * @param[in] font Font data 
  */
-void UnloadFont(Font font);
+void UnloadFont(Font* font);
 
 // extern "C"
 #ifdef __cplusplus

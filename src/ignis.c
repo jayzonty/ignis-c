@@ -5,15 +5,16 @@
 #include "ignis_graphics.h"
 #include "ignis_vulkan.h"
 
-#include <ft2build.h>
-#include FT_FREETYPE_H
-
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
+
 #include <vulkan/vulkan.h>
 
 #include <math.h>
@@ -44,7 +45,6 @@ typedef struct
 {
     bool isInitialized;
     Window window;
-    FT_Library freetypeLibrary;
 
     int randomSeed;
 
@@ -57,19 +57,37 @@ typedef struct
 
 typedef struct
 {
-    Vector2 bearing;
-    Vector2 size;
-    float advance;
+    int advance;
+
+    int xOffset;
+    int yOffset;
+    int width;
+    int height;
+    
     Rect uvRect;
 } GlyphData;
 
 typedef struct
 {
-    FT_Face face;
     int fontSize;
+
+    int ascent;
+    int descent;
+    int lineGap;
+
     Texture texture;
-    GlyphData glyphsData[MAX_GLYPHS];
-} FontTextureData;
+
+    GlyphData glyphs[MAX_GLYPHS];
+} FontInstanceData;
+
+typedef struct
+{
+    int id;
+    stbtt_fontinfo fontInfo;
+    unsigned char *fontBuffer;
+
+    DynamicArray fontInstances;
+} FontData;
 
 static Context context = { 0 };
 
@@ -77,8 +95,7 @@ static uint32_t MAX_VERTICES_PER_BATCH = 10000;
 
 static Texture defaultTexture = { 0 };
 
-static DynamicArray fontTextures = { 0 };
-static DynamicArray loadedFontFaces = { 0 };
+static DynamicArray loadedFonts = { 0 };
 
 typedef enum
 {
@@ -89,6 +106,13 @@ typedef enum
 
 static InputState keyInputStates[MAX_KEYS] = { 0 };
 static InputState mouseButtonInputStates[MAX_MOUSE_BUTTONS] = { 0 };
+
+// ----------------------------------------
+// Function declarations
+// ----------------------------------------
+
+void UnloadFontData(FontData* fontData);
+
 
 // ----------------------------------------
 // Input callback Functions
@@ -179,13 +203,8 @@ bool IgnisInit(void)
             defaultTexture = LoadTextureFromData(pixels, 1, 1, 4);
         }
 
-        // Initialize freetype
-        if (FT_Init_FreeType(&context.freetypeLibrary) != 0)
-        {
-            printf("[Engine] Failed to initialize Freetype library!\n");
-        }
-        DynamicArrayInit(&fontTextures, sizeof(FontTextureData));
-        DynamicArrayInit(&loadedFontFaces, sizeof(FT_Face));
+        // Initialize loaded fonts dynamic array
+        DynamicArrayInit(&loadedFonts, sizeof(FontData));
     }
     else
     {
@@ -204,16 +223,14 @@ void IgnisCleanup(void)
     {
         Ignis_Graphics_WaitDeviceIdle();
 
-        size_t numfontTextures = DynamicArrayGetSize(&fontTextures);
-        for (size_t i = 0; i < numfontTextures; ++i)
+        size_t numFonts = DynamicArrayGetSize(&loadedFonts);
+        printf("[Engine] Cleaning up %d fonts\n", numFonts);
+        for (size_t i = 0; i < numFonts; ++i)
         {
-            FontTextureData *textureData = (FontTextureData*)DynamicArrayGetElementAt(&fontTextures, i);
-            UnloadTexture(textureData->texture);
+            FontData* fontData = (FontData*)DynamicArrayGetElementAt(&loadedFonts, i);
+            UnloadFontData(fontData);
         }
-        DynamicArrayFree(&loadedFontFaces);
-        DynamicArrayFree(&fontTextures);
-
-        FT_Done_FreeType(context.freetypeLibrary);
+        DynamicArrayFree(&loadedFonts);
 
         UnloadTexture(defaultTexture);
 
@@ -504,91 +521,104 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
  */
 void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color)
 {
-    FT_Face fontFace = *((FT_Face*)DynamicArrayGetElementAt(&loadedFontFaces, font.id));
-    FontTextureData *fontData = NULL;
+    FontData* fontData = (FontData*)DynamicArrayGetElementAt(&loadedFonts, font.id);
+    if (fontData == NULL)
+    {
+        return;
+    }
 
-    size_t numCachedFontTextures = DynamicArrayGetSize(&fontTextures);
+    FontInstanceData* fontInstanceData = NULL;
+
+    size_t numCachedFontTextures = DynamicArrayGetSize(&fontData->fontInstances);
     for (size_t i = 0; i < numCachedFontTextures; ++i)
     {
-        FontTextureData *fontTextureData = (FontTextureData*)DynamicArrayGetElementAt(&fontTextures, i);
-        if ((fontTextureData->face == fontFace) && (fontTextureData->fontSize == fontSize))
+        FontInstanceData *instanceData = (FontInstanceData*)DynamicArrayGetElementAt(&fontData->fontInstances, i);
+        if (instanceData->fontSize == fontSize)
         {
-            fontData = fontTextureData;
+            fontInstanceData = instanceData;
             break;
         }
     }
 
-    if (fontData == NULL)
+    if (fontInstanceData == NULL)
     {
         printf("[Engine] No cached font data found. Generating new font data...\n");
-        FontTextureData data = { 0 };
-        data.face = fontFace;
+
+        FontInstanceData data = { 0 };
         data.fontSize = fontSize;
 
-        FT_Set_Pixel_Sizes(fontFace, 0, fontSize);
-        int totalHeight = (fontFace->size->metrics.height >> 6) * ceilf(sqrtf(MAX_GLYPHS));
+        float scale = stbtt_ScaleForPixelHeight(&fontData->fontInfo, fontSize);
+
+        int ascent, descent, lineGap;
+        stbtt_GetFontVMetrics(&fontData->fontInfo, &ascent, &descent, &lineGap);
+        ascent = roundf(ascent * scale);
+        descent = roundf(descent * scale);
+        lineGap = roundf(lineGap * scale);
+        data.ascent = ascent;
+        data.descent = descent;
+        data.lineGap = lineGap;
+
+        int height = ascent - descent;
+        int totalHeight = height * ceilf(sqrtf(MAX_GLYPHS));
         int glyphAtlasSize = 1;
         while (glyphAtlasSize < totalHeight) // Look for the nearest power of 2
         {
             glyphAtlasSize = glyphAtlasSize << 1;
         }
-        printf("[Engine] Glyph atlas size: %d\n", glyphAtlasSize);
+        printf("[Engine] Font texture size: %d\n", glyphAtlasSize);
 
-        uint8_t *pixels = (uint8_t*)malloc(sizeof(uint8_t) * glyphAtlasSize * glyphAtlasSize * 4);
+        uint8_t *pixels = (uint8_t*)malloc(sizeof(uint8_t) * glyphAtlasSize * glyphAtlasSize * 4); // TODO: Grayscale to save memory
 
         int x = 0, y = 0;
         for (unsigned char c = 0; c < MAX_GLYPHS; ++c)
         {
-            if (FT_Load_Char(fontFace, c, FT_LOAD_RENDER) != 0)
-            {
-                continue;
-            }
+            GlyphData* glyph = &data.glyphs[c];
 
-            if ((x + fontFace->glyph->bitmap.width) >= glyphAtlasSize)
+            int advance;
+            stbtt_GetCodepointHMetrics(&fontData->fontInfo, c, &advance, NULL);
+            glyph->advance = roundf(advance * scale);
+
+            int xOffset, yOffset;
+            unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontData->fontInfo, scale, scale, c, &glyph->width, &glyph->height, &glyph->xOffset, &glyph->yOffset);
+
+            if ((x + glyph->width) >= glyphAtlasSize)
             {
                 x = 0;
-                y += fontFace->size->metrics.height >> 6;
+                y += height;
             }
 
-            data.glyphsData[c].size.x = fontFace->glyph->bitmap.width;
-            data.glyphsData[c].size.y = fontFace->glyph->bitmap.rows;
-            data.glyphsData[c].bearing.x = fontFace->glyph->bitmap_left;
-            data.glyphsData[c].bearing.y = fontFace->glyph->bitmap_top;
-            data.glyphsData[c].advance = (float)(fontFace->glyph->advance.x >> 6);
+            glyph->uvRect.x = (float)x / (float)glyphAtlasSize;
+            glyph->uvRect.y = (float)y / (float)glyphAtlasSize;
+            glyph->uvRect.width = glyph->width / (float)glyphAtlasSize;
+            glyph->uvRect.height = glyph->height / (float)glyphAtlasSize;
 
-            data.glyphsData[c].uvRect.x = (float)x / (float)glyphAtlasSize;
-            data.glyphsData[c].uvRect.y = (float)y / (float)glyphAtlasSize;
-            data.glyphsData[c].uvRect.width = data.glyphsData[c].size.x / (float)glyphAtlasSize;
-            data.glyphsData[c].uvRect.height = data.glyphsData[c].size.y / (float)glyphAtlasSize;
-
-            for (int row = 0; row < fontFace->glyph->bitmap.rows; ++row)
+            for (int row = 0; row < glyph->height; ++row)
             {
-                for (int col = 0; col < fontFace->glyph->bitmap.width; ++col)
+                for (int col = 0; col < glyph->width; ++col)
                 {
-                    int atlasRow = fontFace->glyph->bitmap.rows - row - 1;
+                    int atlasRow = glyph->height - row - 1;
                     int atlasIndex = ((y + atlasRow) * glyphAtlasSize + (x + col)) * 4;
-                    //printf("row = %d, col = %d, atlasIndex = %d\n", row, col, atlasIndex);
-                    int bufferIndex = row * fontFace->glyph->bitmap.width + col;
+                    int bitmapIndex = row * glyph->width + col;
 
                     pixels[atlasIndex + 0] = 255;
                     pixels[atlasIndex + 1] = 255;
                     pixels[atlasIndex + 2] = 255;
-                    pixels[atlasIndex + 3] = fontFace->glyph->bitmap.buffer[bufferIndex];
+                    pixels[atlasIndex + 3] = bitmap[bitmapIndex];
                 }
             }
 
-            x += fontFace->glyph->bitmap.width;
+            x += glyph->width;
+
+            stbtt_FreeBitmap(bitmap, NULL);
         }
 
         data.texture = LoadTextureFromData(pixels, glyphAtlasSize, glyphAtlasSize, 4);
-        DynamicArrayAdd(&fontTextures, &data);
+        DynamicArrayAdd(&fontData->fontInstances, &data);
 
-        fontData = DynamicArrayGetElementAt(&fontTextures, DynamicArrayGetSize(&fontTextures) - 1);
-
-        free(pixels);
+        fontInstanceData = DynamicArrayGetElementAt(&fontData->fontInstances, DynamicArrayGetSize(&fontData->fontInstances) - 1);
     }
 
-    if (fontData != NULL)
+    if (fontInstanceData != NULL)
     {
         float x = position.x;
 
@@ -596,16 +626,18 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
         for (unsigned long i = 0; i < length; ++i)
         {
             unsigned char c = text[i];
+            GlyphData* glyphData = &fontInstanceData->glyphs[c];
 
             Vector2 pos = { 0 };
-            pos.x = x + fontData->glyphsData[c].bearing.x;
-            pos.y = position.y - (fontData->glyphsData[c].size.y - fontData->glyphsData[c].bearing.y);
+            pos.x = x + glyphData->xOffset;
+            pos.y = position.y - (glyphData->yOffset + glyphData->height); // offsetY is negative up
 
             Vector2 origin = { 0 };
+            Vector2 size = { glyphData->width, glyphData->height };
 
-            DrawTexturedRectangle(pos, fontData->glyphsData[c].size, origin, fontData->texture, fontData->glyphsData[c].uvRect, color);
+            DrawTexturedRectangle(pos, size, origin, fontInstanceData->texture, glyphData->uvRect, color);
 
-            x += fontData->glyphsData[c].advance;
+            x += glyphData->advance;
         }
     }
 }
@@ -775,15 +807,34 @@ void UnloadTexture(Texture texture)
 Font LoadFont(const char *fontFilePath)
 {
     Font ret = { 0 };
+    ret.id = -1;
 
-    FT_Face face;
-    if (FT_New_Face(context.freetypeLibrary, fontFilePath, 0, &face) != 0)
+    FontData fontData = { 0 };
+
+    FILE *fontFile = fopen(fontFilePath, "rb");
+    fseek(fontFile, 0, SEEK_END);
+    long size = ftell(fontFile);
+    fseek(fontFile, 0, SEEK_SET);
+
+    // TODO: Add file IO error handling
+
+    fontData.fontBuffer = malloc(size);
+    fread(fontData.fontBuffer, size, 1, fontFile);
+    fclose(fontFile);
+
+    if (stbtt_InitFont(&fontData.fontInfo, fontData.fontBuffer, 0))
+    {
+        printf("[Engine] Loading font %s\n", fontFilePath);
+        DynamicArrayInit(&fontData.fontInstances, sizeof(FontInstanceData));
+
+        fontData.id = DynamicArrayGetSize(&loadedFonts);
+        ret.id = fontData.id;
+        DynamicArrayAdd(&loadedFonts, &fontData);
+    }
+    else
     {
         printf("[Engine] Failed to load font at path %s\n", fontFilePath);
     }
-
-    ret.id = DynamicArrayGetSize(&loadedFontFaces);
-    DynamicArrayAdd(&loadedFontFaces, &face);
 
     return ret;
 }
@@ -792,9 +843,31 @@ Font LoadFont(const char *fontFilePath)
  * @brief Unloads the specified font data.
  * @param[in] font Font data 
  */
-void UnloadFont(Font font)
+void UnloadFont(Font* font)
 {
-    FT_Face *face = (FT_Face*)DynamicArrayGetElementAt(&loadedFontFaces, font.id);
-    FT_Done_Face(*face);
+    if (font->id < 0)
+    {
+        return;
+    }
+
+    FontData* fontData = DynamicArrayGetElementAt(&loadedFonts, font->id);
+    UnloadFontData(fontData);
+
+    font->id = -1;
 }
 
+void UnloadFontData(FontData* fontData)
+{
+    Ignis_Graphics_WaitDeviceIdle();
+
+    size_t numInstances = DynamicArrayGetSize(&fontData->fontInstances);
+    for (size_t i = 0; i < numInstances; ++i)
+    {
+        FontInstanceData* fontInstanceData = DynamicArrayGetElementAt(&fontData->fontInstances, i);
+        UnloadTexture(fontInstanceData->texture);
+    }
+    DynamicArrayFree(&fontData->fontInstances);
+
+    free(fontData->fontBuffer);
+    fontData->fontBuffer = NULL;
+}

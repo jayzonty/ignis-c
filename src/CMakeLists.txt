@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-find_package(Freetype REQUIRED)
+IF (WIN32)
+    set(ENV{VULKAN_SDK} "C:/VulkanSDK/1.3.231.1")
+ENDIF()
+
 find_package(Vulkan REQUIRED)
 
 set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
@@ -19,7 +22,6 @@ set (SOURCE_FILES
 add_library(ignis ${SOURCE_FILES})
 
 target_include_directories(ignis PUBLIC
-    ${FREETYPE_INCLUDE_DIRS}
     ${Vulkan_INCLUDE_DIR}
     deps/glfw-3.3.8/include/
     ${PROJECT_SOURCE_DIR}/include/
@@ -27,7 +29,6 @@ target_include_directories(ignis PUBLIC
 
 target_link_libraries(ignis PRIVATE
     ${Vulkan_LIBRARY}
-    freetype
     glfw
     ${CMAKE_DL_LIBS} 
     m
