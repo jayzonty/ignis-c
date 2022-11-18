@@ -78,8 +78,8 @@ typedef enum
 typedef enum
 {
     MOUSE_BUTTON_LEFT = 0,
-    MOUSE_BUTTON_MIDDLE = 1,
-    MOUSE_BUTTON_RIGHT = 2
+    MOUSE_BUTTON_RIGHT = 1,
+    MOUSE_BUTTON_MIDDLE = 2,
 } MouseButton;
 
 // When linking with C++, prevent name mangling of C functions
