@@ -236,6 +236,15 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
 void DrawLine(Vector2 start, Vector2 end, float width, Color color);
 
 /**
+ * @brief Draws a bezier curve given the control points.
+ * @param[in] controlPoints Control points
+ * @param[in] numControlPoints Number of control points
+ * @param[in] numSteps Number of segments to draw the curve
+ * @param[in] color Color
+ */
+void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color);
+
+/**
  * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
  * @param[in] position Rectangle position
  * @param[in] size Rectangle size

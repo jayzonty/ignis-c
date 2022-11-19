@@ -205,6 +205,9 @@ bool IgnisInit(void)
 
         // Initialize loaded fonts dynamic array
         DynamicArrayInit(&loadedFonts, sizeof(FontData));
+
+        // Initialize bezier module
+        Ignis_Bezier_Init();
     }
     else
     {
@@ -495,6 +498,18 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
 void DrawLine(Vector2 start, Vector2 end, float width, Color color)
 {
     Ignis_Graphics_DrawLine(start, end, width, color);
+}
+
+/**
+ * @brief Draws a bezier curve given the control points.
+ * @param[in] controlPoints Control points
+ * @param[in] numControlPoints Number of control points
+ * @param[in] numSteps Number of segments to draw the curve
+ * @param[in] color Color
+ */
+void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color)
+{
+    Ignis_Graphics_DrawBezierCurve(controlPoints, numControlPoints, numSteps, color);
 }
 
 /**

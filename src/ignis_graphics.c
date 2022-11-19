@@ -1,8 +1,8 @@
 #include "ignis_graphics.h"
 
 #include "dynamic_array.h"
+#include "ignis/ignis_bezier.h"
 #include "ignis_vulkan.h"
-#include <vulkan/vulkan_core.h>
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -612,6 +612,22 @@ void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color colo
     DynamicArrayAdd(&renderBatch->renderBatchUnits, &unit);
 
     renderBatch->numActiveVertices += 6;
+}
+
+
+
+void Ignis_Graphics_DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color)
+{
+    int numPoints = numSteps + 1;
+    Vector2* points = (Vector2*)malloc(numPoints * sizeof(Vector2));
+
+    GetBezierCurvePoints(controlPoints, numControlPoints, numSteps, points);
+    for (int i = 1; i < numPoints; ++i)
+    {
+        DrawLine(points[i - 1], points[i], 1.0f, color);
+    }
+
+    free(points);
 }
 
 void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint)

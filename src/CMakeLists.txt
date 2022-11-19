@@ -13,10 +13,11 @@ add_subdirectory(deps/glfw-3.3.8/)
 set (SOURCE_FILES
     dynamic_array.c
 
-    ignis.c
+    ignis_bezier.c
     ignis_graphics.c
     ignis_math.c
     ignis_vulkan.c
+    ignis.c
 )
 
 add_library(ignis ${SOURCE_FILES})

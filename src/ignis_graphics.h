@@ -23,6 +23,7 @@ void Ignis_Graphics_Draw(void);
 
 void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
 void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color color);
+void Ignis_Graphics_DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color);
 void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint);
 
 int Ignis_Graphics_LoadTextureFromData(const uint8_t *pixels, int width, int height, int numChannels);
