@@ -2,6 +2,7 @@
 
 #include "dynamic_array.h"
 #include "ignis/ignis_math.h"
+#include "ignis_bezier_internal.h"
 #include "ignis_graphics.h"
 #include "ignis_vulkan.h"
 
