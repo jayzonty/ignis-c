@@ -117,13 +117,22 @@ Vector2 Vector2Direction(Vector2 source, Vector2 destination);
 // ----------------------------------------
 
 /**
- * @brief Clamps the specified value between the specified minimum and maximum.
+ * @brief Clamps an unsigned 32-bit value between the specified minimum and maximum.
  * @param[in] val Value to clamp
  * @param[in] min Minimum value
  * @param[in] max Maximum value
  * @return Clamped value
  */
-uint32_t Clamp(uint32_t val, uint32_t min, uint32_t max);
+uint32_t Clamp_Uint32(uint32_t val, uint32_t min, uint32_t max);
+
+/**
+ * @brief Clamps a float value between the specified minimum and maximum.
+ * @param[in] val Value to clamp
+ * @param[in] min Minimum value
+ * @param[in] max Maximum value
+ * @return Clamped value
+ */
+float Clamp_Float(float val, float min, float max);
 
 /**
  * @brief Gets the minimum between the two numbers.

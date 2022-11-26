@@ -275,6 +275,14 @@ void Draw(void);
 // ----------------------------------------
 
 /**
+ * @brief Checks whether the point is inside the rectangle.
+ * @param[in] point Point
+ * @param[in] rect Rectangle
+ * @return True if the point is inside the rectangle
+ */
+bool IsPointInsideRect(Vector2 point, Rect rect);
+
+/**
  * @brief Checks whether the two specified rectangles are overlapping.
  * @param[in] rectA First rectangle
  * @param[in] rectB Second rectangle

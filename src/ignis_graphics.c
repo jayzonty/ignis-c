@@ -1161,8 +1161,8 @@ bool InitSwapchain(void)
         int width, height;
         glfwGetFramebufferSize(_windowHandle, &width, &height);
 
-        swapchainImageExtent.width = Clamp(width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
-        swapchainImageExtent.height = Clamp(height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
+        swapchainImageExtent.width = Clamp_Uint32(width, surfaceCapabilities.minImageExtent.width, surfaceCapabilities.maxImageExtent.width);
+        swapchainImageExtent.height = Clamp_Uint32(height, surfaceCapabilities.minImageExtent.height, surfaceCapabilities.maxImageExtent.height);
     }
 
     // --- Create swapchain ---
