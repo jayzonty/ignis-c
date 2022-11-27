@@ -155,6 +155,13 @@ void EndFrame();
 // ----------------------------------------
 
 /**
+ * @brief Checks whether the specified key is not pressed/held down.
+ * @param[in] key Key to check
+ * @return True if the specified key is not pressed/held down.
+ */
+bool IsKeyUp(Key key);
+
+/**
  * @brief Checks whether the specified key is pressed during the current frame.
  * @param[in] key Key to check
  * @return True if the specified key is pressed during the current frame. 
@@ -169,6 +176,13 @@ bool IsKeyPressed(Key key);
 bool IsKeyDown(Key key);
 
 /**
+ * @brief Checks whether the specified mouse button is not pressed/held down.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is not pressed/held down. 
+ */
+bool IsMouseButtonUp(MouseButton mouseButton);
+
+/**
  * @brief Checks whether the specified mouse button is pressed during the current frame.
  * @param[in] mouseButton Mouse button to check
  * @return True if the specified mouse button is pressed during the current frame. 
@@ -181,6 +195,13 @@ bool IsMouseButtonPressed(MouseButton mouseButton);
  * @return True if the specified mouse button is currently being held down. 
  */
 bool IsMouseButtonDown(MouseButton mouseButton);
+
+/**
+ * @brief Checks whether the specified mouse button is released during the current frame.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is released during the current frame.
+ */
+bool IsMouseButtonReleased(MouseButton mouseButton);
 
 /**
  * @brief Gets the current position of the mouse cursor.

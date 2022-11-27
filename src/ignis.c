@@ -100,9 +100,10 @@ static DynamicArray loadedFonts = { 0 };
 
 typedef enum
 {
-    INPUT_STATE_RELEASED = 0,
+    INPUT_STATE_UP = 0,
     INPUT_STATE_PRESSED = 1,
-    INPUT_STATE_HELD = 2
+    INPUT_STATE_DOWN = 2,
+    INPUT_STATE_RELEASED = 3,
 } InputState;
 
 static InputState keyInputStates[MAX_KEYS] = { 0 };
@@ -125,7 +126,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     {
         if (action == GLFW_PRESS)
         {
-            if (keyInputStates[key] == INPUT_STATE_RELEASED)
+            if (keyInputStates[key] == INPUT_STATE_UP)
             {
                 keyInputStates[key] = INPUT_STATE_PRESSED;
             }
@@ -136,7 +137,7 @@ void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
             {
                 keyInputStates[key] = INPUT_STATE_RELEASED;
             }
-            else if (keyInputStates[key] == INPUT_STATE_HELD)
+            else if (keyInputStates[key] == INPUT_STATE_DOWN)
             {
                 keyInputStates[key] = INPUT_STATE_RELEASED;
             }
@@ -148,7 +149,7 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     if (action == GLFW_PRESS)
     {
-        if (mouseButtonInputStates[button] == INPUT_STATE_RELEASED)
+        if (mouseButtonInputStates[button] == INPUT_STATE_UP)
         {
             mouseButtonInputStates[button] = INPUT_STATE_PRESSED;
         }
@@ -159,7 +160,7 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
         {
             mouseButtonInputStates[button] = INPUT_STATE_RELEASED;
         }
-        else if (mouseButtonInputStates[button] == INPUT_STATE_HELD)
+        else if (mouseButtonInputStates[button] == INPUT_STATE_DOWN)
         {
             mouseButtonInputStates[button] = INPUT_STATE_RELEASED;
         }
@@ -371,18 +372,36 @@ void EndFrame()
         {
             if ((glfwGetKey(context.window.handle, key) == GLFW_PRESS) && (keyInputStates[key] == INPUT_STATE_PRESSED))
             {
-                keyInputStates[key] = INPUT_STATE_HELD;
+                keyInputStates[key] = INPUT_STATE_DOWN;
+            }
+            else if ((glfwGetKey(context.window.handle, key) == GLFW_RELEASE) && (keyInputStates[key] == INPUT_STATE_RELEASED))
+            {
+                keyInputStates[key] = INPUT_STATE_UP;
             }
         }
         for (int button = 0; button < MAX_MOUSE_BUTTONS; ++button)
         {
             if ((glfwGetMouseButton(context.window.handle, button) == GLFW_PRESS) && (mouseButtonInputStates[button] == INPUT_STATE_PRESSED))
             {
-                mouseButtonInputStates[button] = INPUT_STATE_HELD;
+                mouseButtonInputStates[button] = INPUT_STATE_DOWN;
+            }
+            else if ((glfwGetMouseButton(context.window.handle, button) == GLFW_RELEASE) && (mouseButtonInputStates[button] == INPUT_STATE_RELEASED))
+            {
+                mouseButtonInputStates[button] = INPUT_STATE_UP;
             }
         }
         glfwPollEvents();
     }
+}
+
+/**
+ * @brief Checks whether the specified key is not pressed/held down.
+ * @param[in] key Key to check
+ * @return True if the specified key is not pressed/held down.
+ */
+bool IsKeyUp(Key key)
+{
+    return (keyInputStates[key] == INPUT_STATE_UP);
 }
 
 /**
@@ -402,7 +421,27 @@ bool IsKeyPressed(Key key)
  */
 bool IsKeyDown(Key key)
 {
-    return (keyInputStates[key] == INPUT_STATE_HELD);
+    return (keyInputStates[key] == INPUT_STATE_DOWN);
+}
+
+/**
+ * @brief Checks whether the specified key is released during the current frame.
+ * @param[in] key Key to check
+ * @return True if the specified key is released during the current frame. 
+ */
+bool IsKeyReleased(Key key)
+{
+    return (keyInputStates[key] == INPUT_STATE_RELEASED);
+}
+
+/**
+ * @brief Checks whether the specified mouse button is not pressed/held down.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is not pressed/held down. 
+ */
+bool IsMouseButtonUp(MouseButton mouseButton)
+{
+    return (mouseButtonInputStates[mouseButton] == INPUT_STATE_UP);
 }
 
 /**
@@ -422,7 +461,17 @@ bool IsMouseButtonPressed(MouseButton mouseButton)
  */
 bool IsMouseButtonDown(MouseButton mouseButton)
 {
-    return (mouseButtonInputStates[mouseButton] == INPUT_STATE_HELD);
+    return (mouseButtonInputStates[mouseButton] == INPUT_STATE_DOWN);
+}
+
+/**
+ * @brief Checks whether the specified mouse button is released during the current frame.
+ * @param[in] mouseButton Mouse button to check
+ * @return True if the specified mouse button is released during the current frame.
+ */
+bool IsMouseButtonReleased(MouseButton mouseButton)
+{
+    return (mouseButtonInputStates[mouseButton] == INPUT_STATE_RELEASED);
 }
 
 /**
