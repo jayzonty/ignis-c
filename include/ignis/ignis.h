@@ -176,6 +176,13 @@ bool IsKeyPressed(Key key);
 bool IsKeyDown(Key key);
 
 /**
+ * @brief Checks whether the specified key is released during the current frame.
+ * @param[in] key Key to check
+ * @return True if the specified key is released during the current frame. 
+ */
+bool IsKeyReleased(Key key);
+
+/**
  * @brief Checks whether the specified mouse button is not pressed/held down.
  * @param[in] mouseButton Mouse button to check
  * @return True if the specified mouse button is not pressed/held down. 
