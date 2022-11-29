@@ -403,6 +403,20 @@ Font LoadFont(const char* fontFilePath);
  */
 void UnloadFont(Font* font);
 
+
+// ----------------------------------------
+// Text Functions
+// ----------------------------------------
+
+/**
+ * @brief Measures the specified text using the measurements of the specified font and font size.
+ * @param[in] text Text to measure
+ * @param[in] font Font
+ * @param[in] fontSize Font size
+ * @return Size of the specified text
+ */
+Vector2 MeasureTextSize(const char* text, Font font, int fontSize);
+
 // extern "C"
 #ifdef __cplusplus
 }

@@ -110,10 +110,37 @@ static InputState keyInputStates[MAX_KEYS] = { 0 };
 static InputState mouseButtonInputStates[MAX_MOUSE_BUTTONS] = { 0 };
 
 // ----------------------------------------
-// Function declarations
+// Internal Function declarations
 // ----------------------------------------
 
+/**
+ * @brief Gets the internal font data associated with the specified font.
+ * @param[in] font Font
+ * @return Font data
+ */
+FontData* GetFontData(Font font);
+
+/**
+ * @brief Unloads the specified internal font data.
+ * @param[in] fontData Pointer to the font data to unload
+ */
 void UnloadFontData(FontData* fontData);
+
+/**
+ * @brief Gets the font instance data associated with the specified font data and font size.
+ * @param[in] fontData Internal font data
+ * @param[in] fontSize Font size
+ * @return Pointer to the font instance data. If the font instance data is not yet loaded, returns NULL
+ */
+FontInstanceData* GetFontInstanceData(FontData* fontData, int fontSize);
+
+/**
+ * @brief Loads the font instance data associated with the specified font data and font size.
+ * @param[in] fontData Internal font data
+ * @param[in] fontSize Font size
+ * @return Pointer to the loaded font instance data
+ */
+FontInstanceData* LoadFontInstanceData(FontData* fontData, int fontSize);
 
 
 // ----------------------------------------
@@ -586,101 +613,17 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
  */
 void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color)
 {
-    FontData* fontData = (FontData*)DynamicArrayGetElementAt(&loadedFonts, font.id);
+    FontData* fontData = GetFontData(font);
     if (fontData == NULL)
     {
         return;
     }
 
-    FontInstanceData* fontInstanceData = NULL;
-
-    size_t numCachedFontTextures = DynamicArrayGetSize(&fontData->fontInstances);
-    for (size_t i = 0; i < numCachedFontTextures; ++i)
-    {
-        FontInstanceData *instanceData = (FontInstanceData*)DynamicArrayGetElementAt(&fontData->fontInstances, i);
-        if (instanceData->fontSize == fontSize)
-        {
-            fontInstanceData = instanceData;
-            break;
-        }
-    }
-
+    FontInstanceData* fontInstanceData = GetFontInstanceData(fontData, fontSize);
     if (fontInstanceData == NULL)
     {
         printf("[Engine] No cached font data found. Generating new font data...\n");
-
-        FontInstanceData data = { 0 };
-        data.fontSize = fontSize;
-
-        float scale = stbtt_ScaleForPixelHeight(&fontData->fontInfo, fontSize);
-
-        int ascent, descent, lineGap;
-        stbtt_GetFontVMetrics(&fontData->fontInfo, &ascent, &descent, &lineGap);
-        ascent = roundf(ascent * scale);
-        descent = roundf(descent * scale);
-        lineGap = roundf(lineGap * scale);
-        data.ascent = ascent;
-        data.descent = descent;
-        data.lineGap = lineGap;
-
-        int height = ascent - descent;
-        int totalHeight = height * ceilf(sqrtf(MAX_GLYPHS));
-        int glyphAtlasSize = 1;
-        while (glyphAtlasSize < totalHeight) // Look for the nearest power of 2
-        {
-            glyphAtlasSize = glyphAtlasSize << 1;
-        }
-        printf("[Engine] Font texture size: %d\n", glyphAtlasSize);
-
-        uint8_t *pixels = (uint8_t*)malloc(sizeof(uint8_t) * glyphAtlasSize * glyphAtlasSize * 4); // TODO: Grayscale to save memory
-
-        int x = 0, y = 0;
-        for (unsigned char c = 0; c < MAX_GLYPHS; ++c)
-        {
-            GlyphData* glyph = &data.glyphs[c];
-
-            int advance;
-            stbtt_GetCodepointHMetrics(&fontData->fontInfo, c, &advance, NULL);
-            glyph->advance = roundf(advance * scale);
-
-            int xOffset, yOffset;
-            unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontData->fontInfo, scale, scale, c, &glyph->width, &glyph->height, &glyph->xOffset, &glyph->yOffset);
-
-            if ((x + glyph->width) >= glyphAtlasSize)
-            {
-                x = 0;
-                y += height;
-            }
-
-            glyph->uvRect.x = (float)x / (float)glyphAtlasSize;
-            glyph->uvRect.y = (float)y / (float)glyphAtlasSize;
-            glyph->uvRect.width = glyph->width / (float)glyphAtlasSize;
-            glyph->uvRect.height = glyph->height / (float)glyphAtlasSize;
-
-            for (int row = 0; row < glyph->height; ++row)
-            {
-                for (int col = 0; col < glyph->width; ++col)
-                {
-                    int atlasRow = glyph->height - row - 1;
-                    int atlasIndex = ((y + atlasRow) * glyphAtlasSize + (x + col)) * 4;
-                    int bitmapIndex = row * glyph->width + col;
-
-                    pixels[atlasIndex + 0] = 255;
-                    pixels[atlasIndex + 1] = 255;
-                    pixels[atlasIndex + 2] = 255;
-                    pixels[atlasIndex + 3] = bitmap[bitmapIndex];
-                }
-            }
-
-            x += glyph->width;
-
-            stbtt_FreeBitmap(bitmap, NULL);
-        }
-
-        data.texture = LoadTextureFromData(pixels, glyphAtlasSize, glyphAtlasSize, 4);
-        DynamicArrayAdd(&fontData->fontInstances, &data);
-
-        fontInstanceData = DynamicArrayGetElementAt(&fontData->fontInstances, DynamicArrayGetSize(&fontData->fontInstances) - 1);
+        fontInstanceData = LoadFontInstanceData(fontData, fontSize);
     }
 
     if (fontInstanceData != NULL)
@@ -935,6 +878,63 @@ void UnloadFont(Font* font)
     font->id = -1;
 }
 
+/**
+ * @brief Measures the specified text using the measurements of the specified font and font size.
+ * @param[in] text Text to measure
+ * @param[in] font Font
+ * @param[in] fontSize Font size
+ * @return Size of the specified text
+ */
+Vector2 MeasureTextSize(const char* text, Font font, int fontSize)
+{
+    Vector2 ret = { 0 };
+
+    FontData* fontData = GetFontData(font);
+    if (fontData != NULL)
+    {
+        FontInstanceData* fontInstanceData = GetFontInstanceData(fontData, fontSize);
+        if (fontInstanceData == NULL)
+        {
+            fontInstanceData = LoadFontInstanceData(fontData, fontSize);
+        }
+
+        unsigned long length = strlen(text);
+        for (unsigned long i = 0; i < length; ++i)
+        {
+            unsigned char c = text[i];
+            GlyphData* glyphData = &fontInstanceData->glyphs[c];
+
+            ret.x += glyphData->advance;
+            if (glyphData->height > ret.y)
+            {
+                ret.y = glyphData->height;
+            }
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * @brief Gets the internal font data associated with the specified font.
+ * @param[in] font Font
+ * @return Font data
+ */
+FontData* GetFontData(Font font)
+{
+    size_t numFonts = DynamicArrayGetSize(&loadedFonts);
+    if (font.id < 0 || font.id >= numFonts)
+    {
+        return NULL;
+    }
+
+    return (FontData*)DynamicArrayGetElementAt(&loadedFonts, font.id);
+}
+
+/**
+ * @brief Unloads the specified internal font data.
+ * @param[in] fontData Pointer to the font data to unload
+ */
 void UnloadFontData(FontData* fontData)
 {
     Ignis_Graphics_WaitDeviceIdle();
@@ -949,4 +949,108 @@ void UnloadFontData(FontData* fontData)
 
     free(fontData->fontBuffer);
     fontData->fontBuffer = NULL;
+}
+
+/**
+ * @brief Gets the font instance data associated with the specified font data and font size.
+ * @param[in] fontData Internal font data
+ * @param[in] fontSize Font size
+ * @return Pointer to the font instance data. If the font instance data is not yet loaded, returns NULL
+ */
+FontInstanceData* GetFontInstanceData(FontData* fontData, int fontSize)
+{
+    size_t numCachedFontTextures = DynamicArrayGetSize(&fontData->fontInstances);
+    for (size_t i = 0; i < numCachedFontTextures; ++i)
+    {
+        FontInstanceData *instanceData = (FontInstanceData*)DynamicArrayGetElementAt(&fontData->fontInstances, i);
+        if (instanceData->fontSize == fontSize)
+        {
+            return instanceData;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Loads the font instance data associated with the specified font data and font size.
+ * @param[in] fontData Internal font data
+ * @param[in] fontSize Font size
+ * @return Pointer to the loaded font instance data
+ */
+FontInstanceData* LoadFontInstanceData(FontData* fontData, int fontSize)
+{
+    FontInstanceData data = { 0 };
+    data.fontSize = fontSize;
+
+    float scale = stbtt_ScaleForPixelHeight(&fontData->fontInfo, fontSize);
+
+    int ascent, descent, lineGap;
+    stbtt_GetFontVMetrics(&fontData->fontInfo, &ascent, &descent, &lineGap);
+    ascent = roundf(ascent * scale);
+    descent = roundf(descent * scale);
+    lineGap = roundf(lineGap * scale);
+    data.ascent = ascent;
+    data.descent = descent;
+    data.lineGap = lineGap;
+
+    int height = ascent - descent;
+    int totalHeight = height * ceilf(sqrtf(MAX_GLYPHS));
+    int glyphAtlasSize = 1;
+    while (glyphAtlasSize < totalHeight) // Look for the nearest power of 2
+    {
+        glyphAtlasSize = glyphAtlasSize << 1;
+    }
+    printf("[Engine] Font texture size: %d\n", glyphAtlasSize);
+
+    uint8_t *pixels = (uint8_t*)malloc(sizeof(uint8_t) * glyphAtlasSize * glyphAtlasSize * 4); // TODO: Grayscale to save memory
+
+    int x = 0, y = 0;
+    for (unsigned char c = 0; c < MAX_GLYPHS; ++c)
+    {
+        GlyphData* glyph = &data.glyphs[c];
+
+        int advance;
+        stbtt_GetCodepointHMetrics(&fontData->fontInfo, c, &advance, NULL);
+        glyph->advance = roundf(advance * scale);
+
+        int xOffset, yOffset;
+        unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontData->fontInfo, scale, scale, c, &glyph->width, &glyph->height, &glyph->xOffset, &glyph->yOffset);
+
+        if ((x + glyph->width) >= glyphAtlasSize)
+        {
+            x = 0;
+            y += height;
+        }
+
+        glyph->uvRect.x = (float)x / (float)glyphAtlasSize;
+        glyph->uvRect.y = (float)y / (float)glyphAtlasSize;
+        glyph->uvRect.width = glyph->width / (float)glyphAtlasSize;
+        glyph->uvRect.height = glyph->height / (float)glyphAtlasSize;
+
+        for (int row = 0; row < glyph->height; ++row)
+        {
+            for (int col = 0; col < glyph->width; ++col)
+            {
+                int atlasRow = glyph->height - row - 1;
+                int atlasIndex = ((y + atlasRow) * glyphAtlasSize + (x + col)) * 4;
+                int bitmapIndex = row * glyph->width + col;
+
+                pixels[atlasIndex + 0] = 255;
+                pixels[atlasIndex + 1] = 255;
+                pixels[atlasIndex + 2] = 255;
+                pixels[atlasIndex + 3] = bitmap[bitmapIndex];
+            }
+        }
+
+        x += glyph->width;
+
+        stbtt_FreeBitmap(bitmap, NULL);
+    }
+
+    data.texture = LoadTextureFromData(pixels, glyphAtlasSize, glyphAtlasSize, 4);
+    DynamicArrayAdd(&fontData->fontInstances, &data);
+
+    FontInstanceData* ret = DynamicArrayGetElementAt(&fontData->fontInstances, DynamicArrayGetSize(&fontData->fontInstances) - 1);
+    return ret;
 }
