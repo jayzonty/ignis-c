@@ -13,7 +13,7 @@ typedef enum
 
 int main(int argc, char *argv[])
 {
-    IgnisInit();
+    IgnisInit(800, 600, "Pong");
     SetTargetFPS(60);
 
     Font font = LoadFont("resources/fonts/FiraMono-Regular.ttf");

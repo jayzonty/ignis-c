@@ -195,9 +195,13 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 }
 
 /**
- * @brief Initializes the engine.
+ * @brief Initializes the library.
+ * @param[in] windowWidth Window width
+ * @param[in] windowHeight Window height
+ * @param[in] windowTitle Window title
+ * @return True if the initialization was successful
  */
-bool IgnisInit(void)
+bool IgnisInit(const int windowWidth, const int windowHeight, const char* windowTitle)
 {
     printf("[Engine] InitEngine\n");
     if (!context.isInitialized)
@@ -212,7 +216,12 @@ bool IgnisInit(void)
             return false;
         }
 
-        InitWindow(800, 600, "Test");
+        // --- Window creation ---
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        context.window.handle = glfwCreateWindow(windowWidth, windowHeight, windowTitle, NULL, NULL);
+        context.window.width = windowWidth;
+        context.window.height = windowHeight;
 
         glfwSetKeyCallback(context.window.handle, KeyCallback);
         glfwSetMouseButtonCallback(context.window.handle, MouseButtonCallback);
@@ -271,24 +280,6 @@ void IgnisCleanup(void)
         glfwDestroyWindow(context.window.handle);
         glfwTerminate();
         context.isInitialized = false;
-    }
-}
-
-/**
- * @brief Initializes the main window.
- * @param[in] width Window width
- * @param[in] height Window height
- * @param[in] title Window title
- */
-void InitWindow(const int width, const int height, const char *title)
-{
-    if (context.isInitialized)
-    {
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        context.window.handle = glfwCreateWindow(width, height, title, NULL, NULL);
-        context.window.width = width;
-        context.window.height = height;
     }
 }
 

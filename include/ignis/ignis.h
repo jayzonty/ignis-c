@@ -93,22 +93,18 @@ extern "C"
 // ----------------------------------------
 
 /**
- * @brief Initializes the engine.
+ * @brief Initializes the library.
+ * @param[in] windowWidth Window width
+ * @param[in] windowHeight Window height
+ * @param[in] windowTitle Window title
+ * @return True if the initialization was successful
  */
-bool IgnisInit(void);
+bool IgnisInit(const int windowWidth, const int windowHeight, const char* windowTitle);
 
 /**
- * @brief Shuts the engine down and releases any resources used.
+ * @brief Shuts the library down and releases any resources used.
  */
 void IgnisCleanup(void);
-
-/**
- * @brief Initializes the main window.
- * @param[in] width Window width
- * @param[in] height Window height
- * @param[in] title Window title
- */
-void InitWindow(const int width, const int height, const char *title);
 
 /**
  * @brief Closes the main window.
