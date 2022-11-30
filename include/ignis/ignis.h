@@ -107,6 +107,12 @@ bool IgnisInit(const int windowWidth, const int windowHeight, const char* window
 void IgnisCleanup(void);
 
 /**
+ * @brief Gets the size of the main window.
+ * @return Window size
+ */
+Vector2 GetWindowSize(void);
+
+/**
  * @brief Closes the main window.
  */
 void CloseWindow(void);

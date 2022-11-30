@@ -284,6 +284,16 @@ void IgnisCleanup(void)
 }
 
 /**
+ * @brief Gets the size of the main window.
+ * @return Window size
+ */
+Vector2 GetWindowSize(void)
+{
+    Vector2 ret = { context.window.width, context.window.height };
+    return ret;
+}
+
+/**
  * @brief Closes the main window.
  */
 void CloseWindow(void)
