@@ -270,6 +270,9 @@ int RenderBatchUnitCompFunc(const void *a, const void *b)
 
 void Ignis_Graphics_EndDrawing()
 {
+    // TODO: Move this somewhere and/or make this modifiable...
+    const float MAX_DEPTH = 1000.0f;
+
     size_t numRenderBatches = DynamicArrayGetSize(&renderBatches);
     for (size_t i = 0; i < numRenderBatches; ++i)
     {
@@ -281,6 +284,7 @@ void Ignis_Graphics_EndDrawing()
         {
             renderBatch->vertices[i].x = (renderBatch->vertices[i].x / _windowWidth) * 2.0f - 1.0f;
             renderBatch->vertices[i].y = (renderBatch->vertices[i].y / _windowHeight) * 2.0f - 1.0f;
+            renderBatch->vertices[i].z = 1.0f - (renderBatch->vertices[i].z / MAX_DEPTH);
         }
 
         qsort
@@ -500,7 +504,7 @@ void Ignis_Graphics_Draw(void)
     }
 }
 
-void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
+void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, Color color, float depth)
 {
     const uint32_t NUM_SEGMENTS = 90;
     const uint32_t CIRCLE_VERTEX_COUNT = NUM_SEGMENTS * 3;
@@ -518,7 +522,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
         float y = position.y - radius * (origin.y - 0.5f) * 2.0f;
         renderBatch->vertices[index].x = x;
         renderBatch->vertices[index].y = y;
-        renderBatch->vertices[index].z = 0.0f;
+        renderBatch->vertices[index].z = depth;
         renderBatch->vertices[index].r = color.r / 255.0f;
         renderBatch->vertices[index].g = color.g / 255.0f;
         renderBatch->vertices[index].b = color.b / 255.0f;
@@ -532,7 +536,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
         y = position.y + radius * sinf(i * segmentAngle) - radius * (origin.y - 0.5f) * 2.0f;
         renderBatch->vertices[index].x = x;
         renderBatch->vertices[index].y = y;
-        renderBatch->vertices[index].z = 0.0f;
+        renderBatch->vertices[index].z = depth;
         renderBatch->vertices[index].r = color.r / 255.0f;
         renderBatch->vertices[index].g = color.g / 255.0f;
         renderBatch->vertices[index].b = color.b / 255.0f;
@@ -546,7 +550,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
         y = position.y + radius * sinf((i + 1) * segmentAngle) - radius * (origin.y - 0.5f) * 2.0f;
         renderBatch->vertices[index].x = x;
         renderBatch->vertices[index].y = y;
-        renderBatch->vertices[index].z = 0.0f;
+        renderBatch->vertices[index].z = depth;
         renderBatch->vertices[index].r = color.r / 255.0f;
         renderBatch->vertices[index].g = color.g / 255.0f;
         renderBatch->vertices[index].b = color.b / 255.0f;
@@ -566,7 +570,7 @@ void Ignis_Graphics_DrawCircle(Vector2 position, float radius, Vector2 origin, C
     renderBatch->numActiveVertices += CIRCLE_VERTEX_COUNT;
 }
 
-void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color color)
+void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color color, float depth)
 {
     RenderBatchRequestInfo renderBatchInfo = { 0 };
     renderBatchInfo.minVertexCount = 6;
@@ -593,7 +597,7 @@ void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color colo
     {
         renderBatch->vertices[index + i].x = start.x + d.x * dMult[i] + normal.x * normalMult[i] * width;
         renderBatch->vertices[index + i].y = start.y + d.y * dMult[i] + normal.y * normalMult[i] * width;
-        renderBatch->vertices[index + i].z = 0.0f;
+        renderBatch->vertices[index + i].z = depth;
 
         renderBatch->vertices[index + i].r = color.r / 255.0f;
         renderBatch->vertices[index + i].g = color.g / 255.0f;
@@ -616,7 +620,7 @@ void Ignis_Graphics_DrawLine(Vector2 start, Vector2 end, float width, Color colo
 
 
 
-void Ignis_Graphics_DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color)
+void Ignis_Graphics_DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color, float depth)
 {
     int numPoints = numSteps + 1;
     Vector2* points = (Vector2*)malloc(numPoints * sizeof(Vector2));
@@ -624,13 +628,13 @@ void Ignis_Graphics_DrawBezierCurve(Vector2* controlPoints, int numControlPoints
     GetBezierCurvePoints(controlPoints, numControlPoints, numSteps, points);
     for (int i = 1; i < numPoints; ++i)
     {
-        DrawLine(points[i - 1], points[i], 1.0f, color);
+        DrawLine(points[i - 1], points[i], 1.0f, color, depth);
     }
 
     free(points);
 }
 
-void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint)
+void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint, float depth)
 {
     RenderBatchRequestInfo renderBatchInfo = { 0 };
     renderBatchInfo.minVertexCount = 6;
@@ -649,7 +653,7 @@ void Ignis_Graphics_DrawTexture(Vector2 position, Vector2 size, Vector2 origin, 
         Vector3 vertexPosition = { 0 };
         vertexPosition.x = position.x + size.x * (dx[i] - origin.x);
         vertexPosition.y = position.y + size.y * (dy[i] - origin.y);
-        vertexPosition.z = 0.0f;
+        vertexPosition.z = depth;
 
         renderBatch->vertices[index].x = vertexPosition.x;
         renderBatch->vertices[index].y = vertexPosition.y;

@@ -547,11 +547,12 @@ void EndDrawing(void)
  * @param[in] size Rectangle size
  * @param[in] origin Rectangle origin ([0, 0] for lower-left, [1, 1] for upper-right)
  * @param[in] color Rectangle color
+ * @param[in] depth Depth
  */
-void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color)
+void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color, float depth)
 {
     Rect uvRect = { 0.0f, 0.0f, 1.0f, 1.0f };
-    DrawTexturedRectangle(position, size, origin, defaultTexture, uvRect, color);
+    DrawTexturedRectangle(position, size, origin, defaultTexture, uvRect, color, depth);
 }
 
 /**
@@ -560,10 +561,11 @@ void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color)
  * @param[in] radius Radius
  * @param[in] origin Origin
  * @param[in] color Color
+ * @param[in] depth Depth
  */
-void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
+void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color, float depth)
 {
-    Ignis_Graphics_DrawCircle(position, radius, origin, color);
+    Ignis_Graphics_DrawCircle(position, radius, origin, color, depth);
 }
 
 /**
@@ -572,10 +574,11 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color)
  * @param[in] end End point
  * @param[in] width Width
  * @param[in] color Color
+ * @param[in] depth Depth
  */
-void DrawLine(Vector2 start, Vector2 end, float width, Color color)
+void DrawLine(Vector2 start, Vector2 end, float width, Color color, float depth)
 {
-    Ignis_Graphics_DrawLine(start, end, width, color);
+    Ignis_Graphics_DrawLine(start, end, width, color, depth);
 }
 
 /**
@@ -584,10 +587,11 @@ void DrawLine(Vector2 start, Vector2 end, float width, Color color)
  * @param[in] numControlPoints Number of control points
  * @param[in] numSteps Number of segments to draw the curve
  * @param[in] color Color
+ * @param[in] depth Depth
  */
-void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color)
+void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color, float depth)
 {
-    Ignis_Graphics_DrawBezierCurve(controlPoints, numControlPoints, numSteps, color);
+    Ignis_Graphics_DrawBezierCurve(controlPoints, numControlPoints, numSteps, color, depth);
 }
 
 /**
@@ -598,10 +602,11 @@ void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps,
  * @param[in] texture Texture
  * @param[in] uvRect Rect representing the area within the texture to use
  * @param[in] tint Tint color
+ * @param[in] depth Depth
  */
-void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint)
+void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint, float depth)
 {
-    Ignis_Graphics_DrawTexture(position, size, origin, texture, uvRect, tint);
+    Ignis_Graphics_DrawTexture(position, size, origin, texture, uvRect, tint, depth);
 }
 
 /**
@@ -613,8 +618,9 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
  * @param[in] font Text font
  * @param[in] fontSize Text font size
  * @param[in] color Text color
+ * @param[in] depth Depth
  */
-void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color)
+void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color, float depth)
 {
     FontData* fontData = GetFontData(font);
     if (fontData == NULL)
@@ -645,7 +651,7 @@ void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t le
             Vector2 origin = { 0 };
             Vector2 size = { glyphData->width, glyphData->height };
 
-            DrawTexturedRectangle(pos, size, origin, fontInstanceData->texture, glyphData->uvRect, color);
+            DrawTexturedRectangle(pos, size, origin, fontInstanceData->texture, glyphData->uvRect, color, depth);
 
             x += glyphData->advance;
         }
@@ -659,11 +665,12 @@ void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t le
  * @param[in] font Text font
  * @param[in] fontSize Text font size
  * @param[in] color Text color
+ * @param[in] depth Depth
  */
-void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color)
+void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color, float depth)
 {
     size_t length = strlen(text);
-    DrawTextSubstr(position, text, 0, length, font, fontSize, color);
+    DrawTextSubstr(position, text, 0, length, font, fontSize, color, depth);
 }
 
 /**

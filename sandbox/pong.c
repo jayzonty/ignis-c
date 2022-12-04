@@ -207,22 +207,22 @@ int main(int argc, char *argv[])
             Vector2 titlePos = { 230.0f, 290.0f };
             int titleFontSize = 128;
             Color titleColor = { 255, 255, 255, 255 };
-            DrawText(titlePos, "PONG", font, titleFontSize, titleColor);
+            DrawText(titlePos, "PONG", font, titleFontSize, titleColor, 0.0f);
 
             Vector2 titleInstructionPos = { 220.0f, 250.0f };
             int titleInstructionFontSize = 30;
-            DrawText(titleInstructionPos, "Press Space to play", font, titleInstructionFontSize, titleColor);
+            DrawText(titleInstructionPos, "Press Space to play", font, titleInstructionFontSize, titleColor, 0.0f);
         }
         else if ((currentState == STATE_PREPARE) || (currentState == STATE_SERVE) || (currentState == STATE_GAME))
         {
-            DrawRectangle(ballPos, ballSize, ballOrigin, ballColor);
-            DrawRectangle(paddle1Pos, paddleSize, paddleOrigin, paddle1Color);
-            DrawRectangle(paddle2Pos, paddleSize, paddleOrigin, paddle2Color);
+            DrawRectangle(ballPos, ballSize, ballOrigin, ballColor, 0.0f);
+            DrawRectangle(paddle1Pos, paddleSize, paddleOrigin, paddle1Color, 0.0f);
+            DrawRectangle(paddle2Pos, paddleSize, paddleOrigin, paddle2Color, 0.0f);
             char buf[100];
             sprintf(buf, "%d", player1Score);
-            DrawText(player1ScorePos, buf, font, 30, scoreTextColor);
+            DrawText(player1ScorePos, buf, font, 30, scoreTextColor, 0.0f);
             sprintf(buf, "%d", player2Score);
-            DrawText(player2ScorePos, buf, font, 30, scoreTextColor);
+            DrawText(player2ScorePos, buf, font, 30, scoreTextColor, 0.0f);
 
             if (currentState == STATE_SERVE)
             {
@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
                 Color color = { 255, 255, 255, 255 };
                 char buf2[100];
                 sprintf(buf2, "Player %d serve", serveTurn + 1);
-                DrawText(p, buf2, font, 24, color);
+                DrawText(p, buf2, font, 24, color, 0.0f);
             }
         }
         else if (currentState == STATE_GAMEOVER)
@@ -243,8 +243,8 @@ int main(int argc, char *argv[])
             int winningPlayer = (player1Score == maxScore) ? 1 : 2;
             char buf[100];
             sprintf(buf, "Player %d won!", winningPlayer);
-            DrawText(resultTextPos, buf, font, fontSize, color);
-            DrawText(instructionTextPos, "Press Space to go back to main menu", font, fontSize, color);
+            DrawText(resultTextPos, buf, font, fontSize, color, 0.0f);
+            DrawText(instructionTextPos, "Press Space to go back to main menu", font, fontSize, color, 0.0f);
         }
         
         EndDrawing();

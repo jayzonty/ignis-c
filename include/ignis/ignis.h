@@ -244,8 +244,9 @@ void EndDrawing(void);
  * @param[in] size Rectangle size
  * @param[in] origin Rectangle origin ([0, 0] for lower-left, [1, 1] for upper-right)
  * @param[in] color Rectangle color
+ * @param[in] depth Depth
  */
-void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color);
+void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color, float depth);
 
 /**
  * @brief Adds a circle to the list of things to be drawn by the renderer.
@@ -253,8 +254,9 @@ void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color);
  * @param[in] radius Radius
  * @param[in] origin Origin
  * @param[in] color Color
+ * @param[in] depth Depth
  */
-void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
+void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color, float depth);
 
 /**
  * @brief Draws a line between the starting and end point.
@@ -262,8 +264,9 @@ void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color);
  * @param[in] end End point
  * @param[in] width Width
  * @param[in] color Color
+ * @param[in] depth Depth
  */
-void DrawLine(Vector2 start, Vector2 end, float width, Color color);
+void DrawLine(Vector2 start, Vector2 end, float width, Color color, float depth);
 
 /**
  * @brief Draws a bezier curve given the control points.
@@ -271,8 +274,9 @@ void DrawLine(Vector2 start, Vector2 end, float width, Color color);
  * @param[in] numControlPoints Number of control points
  * @param[in] numSteps Number of segments to draw the curve
  * @param[in] color Color
+ * @param[in] depth Depth
  */
-void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color);
+void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color, float depth);
 
 /**
  * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
@@ -282,8 +286,9 @@ void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps,
  * @param[in] texture Texture
  * @param[in] uvRect Rect representing the area within the texture to use
  * @param[in] tint Tint color
+ * @param[in] depth Depth
  */
-void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint);
+void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint, float depth);
 
 /**
  * @brief Adds a text substring to the list of things to be drawn by the renderer.
@@ -294,8 +299,9 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
  * @param[in] font Text font
  * @param[in] fontSize Text font size
  * @param[in] color Text color
+ * @param[in] depth Depth
  */
-void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color);
+void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color, float depth);
 
 /**
  * @brief Adds a text to the list of things to be drawn by the renderer.
@@ -304,8 +310,9 @@ void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t le
  * @param[in] font Text font
  * @param[in] fontSize Text font size
  * @param[in] color Text color
+ * @param[in] depth Depth
  */
-void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color);
+void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color, float depth);
 
 /**
  * @brief Draws all objects to the framebuffer.
