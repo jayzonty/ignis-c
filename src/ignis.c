@@ -605,14 +605,16 @@ void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Textu
 }
 
 /**
- * @brief Adds a text to the list of things to be drawn by the renderer.
+ * @brief Adds a text substring to the list of things to be drawn by the renderer.
  * @param[in] position Text position
- * @param[in] text Text to render
+ * @param[in] text Original text
+ * @param[in] offset Index of the first character of the substring
+ * @param[in] length Substring length
  * @param[in] font Text font
  * @param[in] fontSize Text font size
  * @param[in] color Text color
  */
-void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color)
+void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color)
 {
     FontData* fontData = GetFontData(font);
     if (fontData == NULL)
@@ -631,10 +633,9 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
     {
         float x = position.x;
 
-        unsigned long length = strlen(text);
-        for (unsigned long i = 0; i < length; ++i)
+        for (size_t i = 0; i < length; ++i)
         {
-            unsigned char c = text[i];
+            unsigned char c = text[offset + i];
             GlyphData* glyphData = &fontInstanceData->glyphs[c];
 
             Vector2 pos = { 0 };
@@ -649,6 +650,20 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
             x += glyphData->advance;
         }
     }
+}
+
+/**
+ * @brief Adds a text to the list of things to be drawn by the renderer.
+ * @param[in] position Text position
+ * @param[in] text Text to render
+ * @param[in] font Text font
+ * @param[in] fontSize Text font size
+ * @param[in] color Text color
+ */
+void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color)
+{
+    size_t length = strlen(text);
+    DrawTextSubstr(position, text, 0, length, font, fontSize, color);
 }
 
 /**
@@ -880,13 +895,15 @@ void UnloadFont(Font* font)
 }
 
 /**
- * @brief Measures the specified text using the measurements of the specified font and font size.
- * @param[in] text Text to measure
+ * @brief Measures a substring of specified text using the measurements of the specified font and font size.
+ * @param[in] text Original text
+ * @param[in] offset Index of the first character of the substring
+ * @param[in] length Substring length
  * @param[in] font Font
  * @param[in] fontSize Font size
  * @return Size of the specified text
  */
-Vector2 MeasureTextSize(const char* text, Font font, int fontSize)
+Vector2 MeasureTextSubstrSize(const char* text, size_t offset, size_t length, Font font, int fontSize)
 {
     Vector2 ret = { 0 };
 
@@ -899,10 +916,9 @@ Vector2 MeasureTextSize(const char* text, Font font, int fontSize)
             fontInstanceData = LoadFontInstanceData(fontData, fontSize);
         }
 
-        unsigned long length = strlen(text);
-        for (unsigned long i = 0; i < length; ++i)
+        for (size_t i = 0; i < length; ++i)
         {
-            unsigned char c = text[i];
+            unsigned char c = text[offset + i];
             GlyphData* glyphData = &fontInstanceData->glyphs[c];
 
             ret.x += glyphData->advance;
@@ -914,6 +930,19 @@ Vector2 MeasureTextSize(const char* text, Font font, int fontSize)
     }
 
     return ret;
+}
+
+/**
+ * @brief Measures the specified text using the measurements of the specified font and font size.
+ * @param[in] text Text to measure
+ * @param[in] font Font
+ * @param[in] fontSize Font size
+ * @return Size of the specified text
+ */
+Vector2 MeasureTextSize(const char* text, Font font, int fontSize)
+{
+    size_t length = strlen(text);
+    return MeasureTextSubstrSize(text, 0, length, font, fontSize);
 }
 
 /**

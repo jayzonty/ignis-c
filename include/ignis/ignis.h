@@ -286,6 +286,18 @@ void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps,
 void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint);
 
 /**
+ * @brief Adds a text substring to the list of things to be drawn by the renderer.
+ * @param[in] position Text position
+ * @param[in] text Original text
+ * @param[in] offset Index of the first character of the substring
+ * @param[in] length Substring length
+ * @param[in] font Text font
+ * @param[in] fontSize Text font size
+ * @param[in] color Text color
+ */
+void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color);
+
+/**
  * @brief Adds a text to the list of things to be drawn by the renderer.
  * @param[in] position Text position
  * @param[in] text Text to render
@@ -409,6 +421,17 @@ void UnloadFont(Font* font);
 // ----------------------------------------
 // Text Functions
 // ----------------------------------------
+
+/**
+ * @brief Measures a substring of specified text using the measurements of the specified font and font size.
+ * @param[in] text Original text
+ * @param[in] offset Index of the first character of the substring
+ * @param[in] length Substring length
+ * @param[in] font Font
+ * @param[in] fontSize Font size
+ * @return Size of the specified text
+ */
+Vector2 MeasureTextSubstrSize(const char* text, size_t offset, size_t length, Font font, int fontSize);
 
 /**
  * @brief Measures the specified text using the measurements of the specified font and font size.
