@@ -15,6 +15,8 @@ bool Ignis_Graphics_Init(int windowWidth, int windowHeight, GLFWwindow* windowHa
 void Ignis_Graphics_WaitDeviceIdle(void);
 void Ignis_Graphics_Cleanup(void);
 
+void Ignis_Graphics_HandleFramebufferResized(int newWidth, int newHeight);
+
 void Ignis_Graphics_SetClearColor(Color color);
 
 void Ignis_Graphics_BeginDrawing(void);

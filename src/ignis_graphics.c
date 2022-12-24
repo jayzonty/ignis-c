@@ -3,6 +3,7 @@
 #include "dynamic_array.h"
 #include "ignis/ignis_bezier.h"
 #include "ignis_vulkan.h"
+#include <vulkan/vulkan_core.h>
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -131,6 +132,8 @@ static GLFWwindow* _windowHandle = NULL;
 
 static Color clearColor = { 0, 0, 0, 255 };
 
+bool isFramebufferResized = false;
+
 // ----------------------------------------
 // Vulkan Function Declarations
 // ----------------------------------------
@@ -149,6 +152,11 @@ VkPhysicalDevice GetSuitablePhysicalDevice(VkInstance instance, uint32_t numRequ
 bool CheckDeviceExtensionSupport(VkPhysicalDevice device, uint32_t numRequiredExtensions, const char **requiredExtensionNames);
 bool GetQueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR surface, uint32_t *graphicsQueueFamilyIndex, uint32_t *presentQueueFamilyIndex);
 bool CreateShaderModule(const char *shaderFilePath, VkDevice device, VkShaderModule *outShaderModule);
+
+void CleanupSwapchain(void);
+void CleanupDepthStencilBuffer(void);
+
+void RecreateSwapchain(void);
 
 RenderBatch* RequestRenderBatch(RenderBatchRequestInfo* info)
 {
@@ -244,6 +252,11 @@ void Ignis_Graphics_Cleanup(void)
     ShutdownVulkan();
 }
 
+void Ignis_Graphics_HandleFramebufferResized(int newWidth, int newHeight)
+{
+    isFramebufferResized = true;
+}
+
 void Ignis_Graphics_SetClearColor(Color color)
 {
     clearColor = color;
@@ -324,12 +337,6 @@ void Ignis_Graphics_Draw(void)
         VK_TRUE,
         UINT64_MAX
     );
-    vkResetFences
-    (
-        vulkanContext.logicalDevice,
-        1, 
-        &vulkanContext.framesData[vulkanContext.currentFrameIndex].renderDoneFence
-    );
 
     uint32_t nextImageIndex;
     VkResult acquireImageResult = vkAcquireNextImageKHR
@@ -341,12 +348,25 @@ void Ignis_Graphics_Draw(void)
         VK_NULL_HANDLE, 
         &nextImageIndex
     );
-    if ((acquireImageResult != VK_SUCCESS) && (acquireImageResult != VK_SUBOPTIMAL_KHR))
+    if (acquireImageResult == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        printf("[Engine] Image out of date! Recreating swapchain...\n");
+        RecreateSwapchain();
+        return;
+    }
+    else if ((acquireImageResult != VK_SUCCESS) && (acquireImageResult != VK_SUBOPTIMAL_KHR))
     {
         printf("[Engine] Failed to acquire next image!\n");
         glfwSetWindowShouldClose(_windowHandle, GLFW_TRUE);
         return;
     }
+
+    vkResetFences
+    (
+        vulkanContext.logicalDevice,
+        1, 
+        &vulkanContext.framesData[vulkanContext.currentFrameIndex].renderDoneFence
+    );
 
     // --- Build render commands ---
         
@@ -496,7 +516,13 @@ void Ignis_Graphics_Draw(void)
         vulkanContext.presentQueue,
         &presentInfo
     );
-    if (presentResult != VK_SUCCESS)
+    if ((presentResult == VK_ERROR_OUT_OF_DATE_KHR) || (presentResult == VK_SUBOPTIMAL_KHR) || isFramebufferResized)
+    {
+        printf("[Engine] Image out of date! Recreating swapchain...\n");
+        isFramebufferResized = false;
+        RecreateSwapchain();
+    }
+    else if (presentResult != VK_SUCCESS)
     {
         printf("[Engine] Failed to present!\n");
         glfwSetWindowShouldClose(_windowHandle, GLFW_TRUE);
@@ -1232,7 +1258,10 @@ bool InitSwapchain(void)
     vulkanContext.swapchainImageExtent = swapchainImageExtent;
 
     VkImageView *swapchainImageViews = (VkImageView*)malloc(sizeof(VkImage) * numSwapchainImages);
-    vulkanContext.framesData = (FrameData*)malloc(sizeof(FrameData) * numSwapchainImages);
+    if (vulkanContext.framesData == NULL)
+    {
+        vulkanContext.framesData = (FrameData*)malloc(sizeof(FrameData) * numSwapchainImages);
+    }
     for (size_t i = 0; i < numSwapchainImages; ++i)
     {
         vulkanContext.framesData[i].image = swapchainImages[i];
@@ -1716,24 +1745,9 @@ void ShutdownVulkan(void)
         vulkanContext.graphicsPipeline = VK_NULL_HANDLE;
     }
 
-    for (size_t i = 0; i < vulkanContext.maxFramesInFlight; ++i)
-    {
-        vkDestroyFramebuffer(vulkanContext.logicalDevice, vulkanContext.framesData[i].framebuffer, NULL);
-    }
-
     if (vulkanContext.commandPool != VK_NULL_HANDLE)
     {
         vkDestroyCommandPool(vulkanContext.logicalDevice, vulkanContext.commandPool, NULL);
-    }
-
-    if (vulkanContext.depthBufferImageView != VK_NULL_HANDLE)
-    {
-        vkDestroyImageView(vulkanContext.logicalDevice, vulkanContext.depthBufferImageView, NULL);
-        vulkanContext.depthBufferImageView = VK_NULL_HANDLE;
-        vkDestroyImage(vulkanContext.logicalDevice, vulkanContext.depthBufferImage, NULL);
-        vulkanContext.depthBufferImage = VK_NULL_HANDLE;
-        vkFreeMemory(vulkanContext.logicalDevice, vulkanContext.depthBufferImageMemory, NULL);
-        vulkanContext.depthBufferImageMemory = VK_NULL_HANDLE;
     }
 
     if (vulkanContext.renderPass != VK_NULL_HANDLE)
@@ -1742,16 +1756,8 @@ void ShutdownVulkan(void)
         vulkanContext.renderPass = VK_NULL_HANDLE;
     }
 
-    for (uint32_t i = 0; i < vulkanContext.maxFramesInFlight; ++i)
-    {
-        vkDestroyImageView(vulkanContext.logicalDevice, vulkanContext.framesData[i].imageView, NULL);
-    }
-
-    // Destroy swapchain
-    if (vulkanContext.swapchain != VK_NULL_HANDLE)
-    {
-        vkDestroySwapchainKHR(vulkanContext.logicalDevice, vulkanContext.swapchain, NULL);
-    }
+    CleanupDepthStencilBuffer();
+    CleanupSwapchain();
 
     free(vulkanContext.framesData);
     vulkanContext.framesData = NULL;
@@ -2062,5 +2068,41 @@ bool CreateShaderModule(const char *shaderFilePath, VkDevice device, VkShaderMod
 
     free(shaderData);
     return true;
+}
+
+void CleanupSwapchain(void)
+{
+    for (uint32_t i = 0; i < vulkanContext.maxFramesInFlight; ++i)
+    {
+        vkDestroyFramebuffer(vulkanContext.logicalDevice, vulkanContext.framesData[i].framebuffer, NULL);
+        vkDestroyImageView(vulkanContext.logicalDevice, vulkanContext.framesData[i].imageView, NULL);
+    }
+
+    vkDestroySwapchainKHR(vulkanContext.logicalDevice, vulkanContext.swapchain, NULL);
+}
+
+void CleanupDepthStencilBuffer(void)
+{
+    if (vulkanContext.depthBufferImageView != VK_NULL_HANDLE)
+    {
+        vkDestroyImageView(vulkanContext.logicalDevice, vulkanContext.depthBufferImageView, NULL);
+        vulkanContext.depthBufferImageView = VK_NULL_HANDLE;
+        vkDestroyImage(vulkanContext.logicalDevice, vulkanContext.depthBufferImage, NULL);
+        vulkanContext.depthBufferImage = VK_NULL_HANDLE;
+        vkFreeMemory(vulkanContext.logicalDevice, vulkanContext.depthBufferImageMemory, NULL);
+        vulkanContext.depthBufferImageMemory = VK_NULL_HANDLE;
+    }
+}
+
+void RecreateSwapchain(void)
+{
+    vkDeviceWaitIdle(vulkanContext.logicalDevice);
+
+    CleanupDepthStencilBuffer();
+    CleanupSwapchain();
+
+    InitSwapchain();
+    InitDepthStencilBuffer();
+    InitFramebuffers();
 }
 

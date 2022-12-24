@@ -194,6 +194,15 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
+// ----------------------------------------
+// Window callback Functions
+// ----------------------------------------
+
+void FramebufferResizedCallback(GLFWwindow* window, int width, int height)
+{
+    Ignis_Graphics_HandleFramebufferResized(width, height);
+}
+
 /**
  * @brief Initializes the library.
  * @param[in] windowWidth Window width
@@ -291,6 +300,11 @@ Vector2 GetWindowSize(void)
 {
     Vector2 ret = { context.window.width, context.window.height };
     return ret;
+}
+
+void SetWindowSize(int width, int height)
+{
+    glfwSetWindowSize(context.window.handle, width, height);
 }
 
 /**

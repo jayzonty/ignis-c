@@ -114,6 +114,13 @@ void IgnisCleanup(void);
 Vector2 GetWindowSize(void);
 
 /**
+ * @brief Sets the size of the main window.
+ * @param[in] width New width
+ * @param[in] height New height
+ */
+void SetWindowSize(int width, int height);
+
+/**
  * @brief Closes the main window.
  */
 void CloseWindow(void);
