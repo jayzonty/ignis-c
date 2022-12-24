@@ -7,6 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Texture data
 typedef struct
 {
     uint32_t id;
@@ -28,6 +29,7 @@ typedef struct
     unsigned char r, g, b, a;
 } Color;
 
+// Keys
 typedef enum
 {
     KEY_SPACE = 32,
@@ -76,6 +78,7 @@ typedef enum
     KEY_UP = 265,
 } Key;
 
+// Mouse buttons
 typedef enum
 {
     MOUSE_BUTTON_LEFT = 0,
@@ -226,6 +229,7 @@ bool IsMouseButtonReleased(MouseButton mouseButton);
  */
 Vector2 GetMousePosition();
 
+
 // ----------------------------------------
 // Drawing Functions
 // ----------------------------------------
@@ -327,6 +331,7 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
  */
 void Draw(void);
 
+
 // ----------------------------------------
 // Overlap Checking Functions
 // ----------------------------------------
@@ -356,6 +361,7 @@ bool CheckRectsOverlap(Rect rectA, Rect rectB);
  * @return True if the two circles are overlapping
  */
 bool CheckCirclesOverlap(Vector2 centerA, float radiusA, Vector2 centerB, float radiusB);
+
 
 // ----------------------------------------
 // Random Functions
@@ -389,6 +395,7 @@ int GetRandomInt(int min, int max);
  */
 float GetRandomFloat(float min, float max);
 
+
 // ----------------------------------------
 // Texture Functions
 // ----------------------------------------
@@ -414,6 +421,7 @@ Texture LoadTextureFromData(const uint8_t *pixels, int width, int height, int nu
  * @param[in] texture Texture to unload
  */
 void UnloadTexture(Texture texture);
+
 
 // ----------------------------------------
 // Font Functions

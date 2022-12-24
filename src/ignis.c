@@ -27,10 +27,16 @@
 #include <string.h>
 #include <time.h>
 
-#define MAX_GLYPHS 128 // Up to what ASCII code will we prepare a glyph texture for
+// Up to what ASCII code will we prepare a glyph texture for
+#define MAX_GLYPHS 128 
+
+// Number of columns in a glyph atlas
 #define GLYPH_ATLAS_NUM_COLUMNS 10
 
+// Number of keycodes to support
 #define MAX_KEYS 512
+
+// Number of mouse button codes to support
 #define MAX_MOUSE_BUTTONS 3
 
 // Window struct
@@ -56,6 +62,7 @@ typedef struct
     float currentFrameStartTime;
 } Context;
 
+// Glyph data
 typedef struct
 {
     int advance;
@@ -68,6 +75,7 @@ typedef struct
     Rect uvRect;
 } GlyphData;
 
+// Font instance data
 typedef struct
 {
     int fontSize;
@@ -81,6 +89,7 @@ typedef struct
     GlyphData glyphs[MAX_GLYPHS];
 } FontInstanceData;
 
+// Font data
 typedef struct
 {
     int id;
@@ -90,14 +99,7 @@ typedef struct
     DynamicArray fontInstances;
 } FontData;
 
-static Context context = { 0 };
-
-static uint32_t MAX_VERTICES_PER_BATCH = 10000;
-
-static Texture defaultTexture = { 0 };
-
-static DynamicArray loadedFonts = { 0 };
-
+// Input states
 typedef enum
 {
     INPUT_STATE_UP = 0,
@@ -106,7 +108,22 @@ typedef enum
     INPUT_STATE_RELEASED = 3,
 } InputState;
 
+// Context
+static Context context = { 0 };
+
+// Maximum number of vertices per render batch
+static uint32_t MAX_VERTICES_PER_BATCH = 10000;
+
+// Default texture
+static Texture defaultTexture = { 0 };
+
+// Loaded fonts
+static DynamicArray loadedFonts = { 0 };
+
+// Key input states
 static InputState keyInputStates[MAX_KEYS] = { 0 };
+
+// Mouse button states
 static InputState mouseButtonInputStates[MAX_MOUSE_BUTTONS] = { 0 };
 
 // ----------------------------------------
@@ -194,6 +211,7 @@ void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
+
 // ----------------------------------------
 // Window callback Functions
 // ----------------------------------------
@@ -203,13 +221,11 @@ void FramebufferResizedCallback(GLFWwindow* window, int width, int height)
     Ignis_Graphics_HandleFramebufferResized(width, height);
 }
 
-/**
- * @brief Initializes the library.
- * @param[in] windowWidth Window width
- * @param[in] windowHeight Window height
- * @param[in] windowTitle Window title
- * @return True if the initialization was successful
- */
+
+// ----------------------------------------
+// Core Functions
+// ----------------------------------------
+
 bool IgnisInit(const int windowWidth, const int windowHeight, const char* windowTitle)
 {
     printf("[Engine] InitEngine\n");
@@ -264,9 +280,6 @@ bool IgnisInit(const int windowWidth, const int windowHeight, const char* window
     return true;
 }
 
-/**
- * @brief Shuts the engine down and releases any resources used.
- */
 void IgnisCleanup(void)
 {
     if (context.isInitialized)
@@ -292,10 +305,6 @@ void IgnisCleanup(void)
     }
 }
 
-/**
- * @brief Gets the size of the main window.
- * @return Window size
- */
 Vector2 GetWindowSize(void)
 {
     Vector2 ret = { context.window.width, context.window.height };
@@ -307,9 +316,6 @@ void SetWindowSize(int width, int height)
     glfwSetWindowSize(context.window.handle, width, height);
 }
 
-/**
- * @brief Closes the main window.
- */
 void CloseWindow(void)
 {
     if (context.isInitialized)
@@ -318,10 +324,6 @@ void CloseWindow(void)
     }
 }
 
-/**
- * @brief Checks whether the main window is closed.
- * @return Flag indicating whether the main window is closed or not.
- */
 bool IsWindowClosed(void)
 {
     if (context.isInitialized)
@@ -332,28 +334,16 @@ bool IsWindowClosed(void)
     return true;
 }
 
-/**
- * @brief Gets the time elapsed since the engine was initialized.
- * @return Time elapsed since the engine was initialized
- */
 float GetCurrentTime(void)
 {
     return (float)glfwGetTime();
 }
 
-/**
- * @brief Gets the time elapsed between the previous and the current frame.
- * @return Time elapsed between the previous and current frame
- */
 float GetDeltaTime(void)
 {
     return context.currentFrameStartTime - context.previousFrameStartTime;
 }
 
-/**
- * @brief Sets the target framerate of the application.
- * @param[in] targetFPS Target framerate
- */
 void SetTargetFPS(int targetFPS)
 {
     if (targetFPS <= 0)
@@ -368,18 +358,12 @@ void SetTargetFPS(int targetFPS)
     }
 }
 
-/**
- * @brief Prepares the next frame.
- */
 void BeginFrame()
 {
     context.previousFrameStartTime = context.currentFrameStartTime;
     context.currentFrameStartTime = GetCurrentTime();
 }
 
-/**
- * @brief Ends the current frame.
- */
 void EndFrame()
 {
     // Wait for the extra time
@@ -436,90 +420,51 @@ void EndFrame()
     }
 }
 
-/**
- * @brief Checks whether the specified key is not pressed/held down.
- * @param[in] key Key to check
- * @return True if the specified key is not pressed/held down.
- */
+
+// ----------------------------------------
+// Input Functions
+// ----------------------------------------
+
 bool IsKeyUp(Key key)
 {
     return (keyInputStates[key] == INPUT_STATE_UP);
 }
 
-/**
- * @brief Checks whether the specified key is pressed during the current frame.
- * @param[in] key Key to check
- * @return True if the specified key is pressed during the current frame. 
- */
 bool IsKeyPressed(Key key)
 {
     return (keyInputStates[key] == INPUT_STATE_PRESSED);
 }
 
-/**
- * @brief Checks whether the specified key is currently being held down or not
- * @param[in] key Key to check
- * @return True if the specified key is currently being held down.
- */
 bool IsKeyDown(Key key)
 {
     return (keyInputStates[key] == INPUT_STATE_DOWN);
 }
 
-/**
- * @brief Checks whether the specified key is released during the current frame.
- * @param[in] key Key to check
- * @return True if the specified key is released during the current frame. 
- */
 bool IsKeyReleased(Key key)
 {
     return (keyInputStates[key] == INPUT_STATE_RELEASED);
 }
 
-/**
- * @brief Checks whether the specified mouse button is not pressed/held down.
- * @param[in] mouseButton Mouse button to check
- * @return True if the specified mouse button is not pressed/held down. 
- */
 bool IsMouseButtonUp(MouseButton mouseButton)
 {
     return (mouseButtonInputStates[mouseButton] == INPUT_STATE_UP);
 }
 
-/**
- * @brief Checks whether the specified mouse button is pressed during the current frame.
- * @param[in] mouseButton Mouse button to check
- * @return True if the specified mouse button is pressed during the current frame. 
- */
 bool IsMouseButtonPressed(MouseButton mouseButton)
 {
     return (mouseButtonInputStates[mouseButton] == INPUT_STATE_PRESSED);
 }
 
-/**
- * @brief Checks whether the specified mouse button is currently being held down or not.
- * @param[in] mouseButton Mouse button to check
- * @return True if the specified mouse button is currently being held down. 
- */
 bool IsMouseButtonDown(MouseButton mouseButton)
 {
     return (mouseButtonInputStates[mouseButton] == INPUT_STATE_DOWN);
 }
 
-/**
- * @brief Checks whether the specified mouse button is released during the current frame.
- * @param[in] mouseButton Mouse button to check
- * @return True if the specified mouse button is released during the current frame.
- */
 bool IsMouseButtonReleased(MouseButton mouseButton)
 {
     return (mouseButtonInputStates[mouseButton] == INPUT_STATE_RELEASED);
 }
 
-/**
- * @brief Gets the current position of the mouse cursor.
- * @return Current position of the mouse cursor
- */
 Vector2 GetMousePosition()
 {
     double x, y;
@@ -530,110 +475,52 @@ Vector2 GetMousePosition()
     return ret;
 }
 
-/**
- * @brief Sets the color to be used to clear the background.
- * @param[in] color Clear color
- */
+
+// ----------------------------------------
+// Drawing Functions
+// ----------------------------------------
+
 void SetClearColor(Color color)
 {
     Ignis_Graphics_SetClearColor(color);
 }
 
-/** 
- * @brief Prepares the renderer for accepting drawing commands.
- */
 void BeginDrawing(void)
 {
     Ignis_Graphics_BeginDrawing();
 }
 
-/** 
- * @brief Signals the renderer to stop accepting drawing commands and be ready for rendering.
- */
 void EndDrawing(void)
 {
     Ignis_Graphics_EndDrawing();
 }
 
-/** 
- * @brief Adds a rectangle to the list of things to be drawn by the renderer.
- * @param[in] position Rectangle position
- * @param[in] size Rectangle size
- * @param[in] origin Rectangle origin ([0, 0] for lower-left, [1, 1] for upper-right)
- * @param[in] color Rectangle color
- * @param[in] depth Depth
- */
 void DrawRectangle(Vector2 position, Vector2 size, Vector2 origin, Color color, float depth)
 {
     Rect uvRect = { 0.0f, 0.0f, 1.0f, 1.0f };
     DrawTexturedRectangle(position, size, origin, defaultTexture, uvRect, color, depth);
 }
 
-/**
- * @brief Adds a circle to the list of things to be drawn by the renderer.
- * @param[in] position Position
- * @param[in] radius Radius
- * @param[in] origin Origin
- * @param[in] color Color
- * @param[in] depth Depth
- */
 void DrawCircle(Vector2 position, float radius, Vector2 origin, Color color, float depth)
 {
     Ignis_Graphics_DrawCircle(position, radius, origin, color, depth);
 }
 
-/**
- * @brief Draws a line between the starting and end point.
- * @param[in] start Start point
- * @param[in] end End point
- * @param[in] width Width
- * @param[in] color Color
- * @param[in] depth Depth
- */
 void DrawLine(Vector2 start, Vector2 end, float width, Color color, float depth)
 {
     Ignis_Graphics_DrawLine(start, end, width, color, depth);
 }
 
-/**
- * @brief Draws a bezier curve given the control points.
- * @param[in] controlPoints Control points
- * @param[in] numControlPoints Number of control points
- * @param[in] numSteps Number of segments to draw the curve
- * @param[in] color Color
- * @param[in] depth Depth
- */
 void DrawBezierCurve(Vector2* controlPoints, int numControlPoints, int numSteps, Color color, float depth)
 {
     Ignis_Graphics_DrawBezierCurve(controlPoints, numControlPoints, numSteps, color, depth);
 }
 
-/**
- * @brief Adds a textured rectangle to the list of things to be drawn by the renderer.
- * @param[in] position Rectangle position
- * @param[in] size Rectangle size
- * @param[in] origin Rectangle origin ([0, 0] for lower-left, [1, 1] for upper-right)
- * @param[in] texture Texture
- * @param[in] uvRect Rect representing the area within the texture to use
- * @param[in] tint Tint color
- * @param[in] depth Depth
- */
 void DrawTexturedRectangle(Vector2 position, Vector2 size, Vector2 origin, Texture texture, Rect uvRect, Color tint, float depth)
 {
     Ignis_Graphics_DrawTexture(position, size, origin, texture, uvRect, tint, depth);
 }
 
-/**
- * @brief Adds a text substring to the list of things to be drawn by the renderer.
- * @param[in] position Text position
- * @param[in] text Original text
- * @param[in] offset Index of the first character of the substring
- * @param[in] length Substring length
- * @param[in] font Text font
- * @param[in] fontSize Text font size
- * @param[in] color Text color
- * @param[in] depth Depth
- */
 void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t length, Font font, int fontSize, Color color, float depth)
 {
     FontData* fontData = GetFontData(font);
@@ -672,35 +559,22 @@ void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t le
     }
 }
 
-/**
- * @brief Adds a text to the list of things to be drawn by the renderer.
- * @param[in] position Text position
- * @param[in] text Text to render
- * @param[in] font Text font
- * @param[in] fontSize Text font size
- * @param[in] color Text color
- * @param[in] depth Depth
- */
 void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color, float depth)
 {
     size_t length = strlen(text);
     DrawTextSubstr(position, text, 0, length, font, fontSize, color, depth);
 }
 
-/**
- * @brief Draws all objects to the framebuffer.
- */
 void Draw(void)
 {
     Ignis_Graphics_Draw();
 }
 
-/**
- * @brief Checks whether the point is inside the rectangle.
- * @param[in] point Point
- * @param[in] rect Rectangle
- * @return True if the point is inside the rectangle
- */
+
+// ----------------------------------------
+// Overlap Checking Functions
+// ----------------------------------------
+
 bool IsPointInsideRect(Vector2 point, Rect rect)
 {
     return (rect.x < point.x) 
@@ -709,12 +583,6 @@ bool IsPointInsideRect(Vector2 point, Rect rect)
             && (point.y < rect.y + rect.height);
 }
 
-/**
- * @brief Checks whether the two specified rectangles are overlapping.
- * @param[in] rectA First rectangle
- * @param[in] rectB Second rectangle
- * @return True if the two rectangles are overlapping
- */
 bool CheckRectsOverlap(Rect rectA, Rect rectB)
 {
     Vector2 minA = { rectA.x, rectA.y };
@@ -730,14 +598,6 @@ bool CheckRectsOverlap(Rect rectA, Rect rectB)
     return true;
 }
 
-/**
- * @brief Checks whether the two specified circles are overlapping.
- * @param[in] centerA Center of the first circle
- * @param[in] radiusA Radius of the first circle
- * @param[in] centerB Center of the second circle
- * @param[in] radiusB Radius of the second circle
- * @return True if the two circles are overlapping
- */
 bool CheckCirclesOverlap(Vector2 centerA, float radiusA, Vector2 centerB, float radiusB)
 {
     Vector2 D = Vector2Subtract(centerA, centerB);
@@ -746,31 +606,22 @@ bool CheckCirclesOverlap(Vector2 centerA, float radiusA, Vector2 centerB, float 
     return sqrDist < radiusSqr;
 }
 
-/**
- * @brief Sets the seed for the random number generator.
- * @param[in] seed Seed
- */
+
+// ----------------------------------------
+// Random Functions
+// ----------------------------------------
+
 void SetRandomSeed(unsigned int seed)
 {
     srand(seed);
     context.randomSeed = seed;
 }
 
-/**
- * @brief Gets the seed for the random number generator.
- * @return Current seed
- */
 unsigned int GetRandomSeed()
 {
     return context.randomSeed;
 }
 
-/**
- * @brief Gets a random integer within [min, max].
- * @param[in] min Minimum
- * @param[in] max Maximum
- * @return Random integer within [min, max]
- */
 int GetRandomInt(int min, int max)
 {
     if (min > max)
@@ -796,12 +647,6 @@ int GetRandomInt(int min, int max)
     return ret;
 }
 
-/**
- * @brief Gets a random float within [min, max].
- * @param[in] min Minimum
- * @param[in] max Maximum
- * @return Random float within [min, max]
- */
 float GetRandomFloat(float min, float max)
 {
     float randMax = (float)RAND_MAX;
@@ -809,11 +654,11 @@ float GetRandomFloat(float min, float max)
     return min + (max - min) * r;
 }
 
-/**
- * @brief Loads the texture at the specified path.
- * @param[in] texturePath Path to the texture file
- * @return Loaded texture object
- */
+
+// ----------------------------------------
+// Texture Functions
+// ----------------------------------------
+
 Texture LoadTexture(const char *texturePath)
 {
     Texture ret = { 0 };
@@ -826,13 +671,6 @@ Texture LoadTexture(const char *texturePath)
     return ret;
 }
 
-/**
- * @brief Loads a texture from raw bytes data.
- * @param[in] pixels Raw pixel data
- * @param[in] width Image width
- * @param[in] height Image height
- * @param[in] numChannels Number of channels in the image
- */
 Texture LoadTextureFromData(const uint8_t *pixels, int width, int height, int numChannels)
 {
     Texture ret = { 0 };
@@ -849,20 +687,16 @@ Texture LoadTextureFromData(const uint8_t *pixels, int width, int height, int nu
     return ret;
 }
 
-/**
- * @brief Unloads the specified texture.
- * @param[in] texture Texture to unload
- */
 void UnloadTexture(Texture texture)
 {
     Ignis_Graphics_UnloadTexture(texture.id);
 }
 
-/**
- * @brief Loads font data from the specified font file path.
- * @param[in] fontFilePath Font file path
- * @return Font data
- */
+
+// ----------------------------------------
+// Font Functions
+// ----------------------------------------
+
 Font LoadFont(const char *fontFilePath)
 {
     Font ret = { 0 };
@@ -898,10 +732,6 @@ Font LoadFont(const char *fontFilePath)
     return ret;
 }
 
-/**
- * @brief Unloads the specified font data.
- * @param[in] font Font data 
- */
 void UnloadFont(Font* font)
 {
     if (font->id < 0)
@@ -915,15 +745,11 @@ void UnloadFont(Font* font)
     font->id = -1;
 }
 
-/**
- * @brief Measures a substring of specified text using the measurements of the specified font and font size.
- * @param[in] text Original text
- * @param[in] offset Index of the first character of the substring
- * @param[in] length Substring length
- * @param[in] font Font
- * @param[in] fontSize Font size
- * @return Size of the specified text
- */
+
+// ----------------------------------------
+// Text Functions
+// ----------------------------------------
+
 Vector2 MeasureTextSubstrSize(const char* text, size_t offset, size_t length, Font font, int fontSize)
 {
     Vector2 ret = { 0 };
@@ -953,24 +779,17 @@ Vector2 MeasureTextSubstrSize(const char* text, size_t offset, size_t length, Fo
     return ret;
 }
 
-/**
- * @brief Measures the specified text using the measurements of the specified font and font size.
- * @param[in] text Text to measure
- * @param[in] font Font
- * @param[in] fontSize Font size
- * @return Size of the specified text
- */
 Vector2 MeasureTextSize(const char* text, Font font, int fontSize)
 {
     size_t length = strlen(text);
     return MeasureTextSubstrSize(text, 0, length, font, fontSize);
 }
 
-/**
- * @brief Gets the internal font data associated with the specified font.
- * @param[in] font Font
- * @return Font data
- */
+
+// ----------------------------------------
+// Internal Functions
+// ----------------------------------------
+
 FontData* GetFontData(Font font)
 {
     size_t numFonts = DynamicArrayGetSize(&loadedFonts);
@@ -982,10 +801,6 @@ FontData* GetFontData(Font font)
     return (FontData*)DynamicArrayGetElementAt(&loadedFonts, font.id);
 }
 
-/**
- * @brief Unloads the specified internal font data.
- * @param[in] fontData Pointer to the font data to unload
- */
 void UnloadFontData(FontData* fontData)
 {
     Ignis_Graphics_WaitDeviceIdle();
@@ -1002,12 +817,6 @@ void UnloadFontData(FontData* fontData)
     fontData->fontBuffer = NULL;
 }
 
-/**
- * @brief Gets the font instance data associated with the specified font data and font size.
- * @param[in] fontData Internal font data
- * @param[in] fontSize Font size
- * @return Pointer to the font instance data. If the font instance data is not yet loaded, returns NULL
- */
 FontInstanceData* GetFontInstanceData(FontData* fontData, int fontSize)
 {
     size_t numCachedFontTextures = DynamicArrayGetSize(&fontData->fontInstances);
@@ -1023,12 +832,6 @@ FontInstanceData* GetFontInstanceData(FontData* fontData, int fontSize)
     return NULL;
 }
 
-/**
- * @brief Loads the font instance data associated with the specified font data and font size.
- * @param[in] fontData Internal font data
- * @param[in] fontSize Font size
- * @return Pointer to the loaded font instance data
- */
 FontInstanceData* LoadFontInstanceData(FontData* fontData, int fontSize)
 {
     FontInstanceData data = { 0 };
@@ -1105,3 +908,4 @@ FontInstanceData* LoadFontInstanceData(FontData* fontData, int fontSize)
     FontInstanceData* ret = DynamicArrayGetElementAt(&fontData->fontInstances, DynamicArrayGetSize(&fontData->fontInstances) - 1);
     return ret;
 }
+

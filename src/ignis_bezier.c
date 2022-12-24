@@ -2,33 +2,26 @@
 
 #include "ignis_bezier_internal.h"
 
+#include <vulkan/vulkan_core.h>
+
 #include <math.h>
 
 // Maximum rows in the pascal triangle
 #define MAX_PASCAL_TRIANGLE_SIZE 100
+
 // 2D array containing the coefficients of the pascal triangle
 int pascalTriangle[MAX_PASCAL_TRIANGLE_SIZE][MAX_PASCAL_TRIANGLE_SIZE + 1];
 
-#include <vulkan/vulkan_core.h>
-/**
- * @brief Gets the position of a point along the bezier curve. 
- * @param[in] controlPoints Control points
- * @param[in] numControlPoints Number of control points
- * @param[in] t Percentage along the bezier curve path
- */
+
+// ----------------------------------------
+// Public Functions
+// ----------------------------------------
+
 Vector2 GetBezierCurvePoint(Vector2* controlPoints, int numControlPoints, float t)
 {
     return GetBezierCurvePointTangent(controlPoints, numControlPoints, t, NULL);
 }
 
-/**
- * @brief Gets the point and tangent of a point along the bezier curve. 
- * @param[in] controlPoints Control points
- * @param[in] numControlPoints Number of control points
- * @param[in] t Percentage along the bezier curve path
- * @param[out] outTangent Pointer to the Vector2 where the tangent will be outputted
- * @return Point along the bezier curve
- */
 Vector2 GetBezierCurvePointTangent(Vector2* controlPoints, int numControlPoints, float t, Vector2* outTangent)
 {
     int curveOrder = numControlPoints - 1; // A quadratic (order = 2) bezier curve has 3 points, a cubic (order = 3) curve has 4 points, ...
@@ -64,26 +57,11 @@ Vector2 GetBezierCurvePointTangent(Vector2* controlPoints, int numControlPoints,
     return ret;
 }
 
-/**
- * @brief Gets the position of all points along the bezier curve.
- * @param[in] controlPoints Control points
- * @param[in] numControlPoints Number of control points
- * @param[in] numSteps Number of segments in the bezier curve
- * @param[in] outPoints Pointer to a Vector2 array of size (numSteps + 1) that will contain the output points
- */
 void GetBezierCurvePoints(Vector2* controlPoints, int numControlPoints, int numSteps, Vector2* outPoints)
 {
     GetBezierCurvePointsTangents(controlPoints, numControlPoints, numSteps, outPoints, NULL);
 }
 
-/**
- * @brief Gets the position of all points and tangents along the bezier curve.
- * @param[in] controlPoints Control points
- * @param[in] numControlPoints Number of control points
- * @param[in] numSteps Number of segments in the bezier curve
- * @param[in] outPoints Pointer to a Vector2 array of size (numSteps + 1) that will contain the output points
- * @param[in] outTangents Pointer to a Vector2 array of size (numSteps) that will contain the output tangents
- */
 void GetBezierCurvePointsTangents(Vector2* controlPoints, int numControlPoints, int numSteps, Vector2* outPoints, Vector2* outTangents)
 {
     float stepAmount = 1.0f / numSteps;
@@ -105,10 +83,11 @@ void GetBezierCurvePointsTangents(Vector2* controlPoints, int numControlPoints, 
     }
 }
 
-/**
- * @brief Initializes the bezier curve module.
- * @return True if the initialization was successful. False otherwise
- */
+
+// ----------------------------------------
+// Internal Functions
+// ----------------------------------------
+
 bool Ignis_Bezier_Init()
 {
     // --- Generate pascal triangle for bezier curve ---
@@ -132,9 +111,7 @@ bool Ignis_Bezier_Init()
     return true;
 }
 
-/**
- * @brief Cleans up resources used by the bezier curve module.
- */
 void Ignis_Bezier_Cleanup()
 {
 }
+

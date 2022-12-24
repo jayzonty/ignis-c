@@ -19,6 +19,7 @@
 #define MAX_NUM_TEXTURE_DESCRIPTORS 256
 #define MAX_VERTICES_PER_BATCH 10000
 
+// Texture data
 typedef struct
 {
     int width;
@@ -95,6 +96,7 @@ typedef struct
     float u, v;
 } Vertex;
 
+// Render batch unit
 typedef struct
 {
     uint32_t firstVertexOffset;
@@ -102,6 +104,7 @@ typedef struct
     uint32_t textureId;
 } RenderBatchUnit;
 
+// Render batch info
 typedef struct
 {
     uint32_t numActiveVertices;
@@ -113,30 +116,42 @@ typedef struct
     DynamicArray renderBatchUnits;
 } RenderBatch;
 
+// Render batch request info
 typedef struct
 {
     int minVertexCount;
 } RenderBatchRequestInfo;
 
+// Vulkan context
 static VulkanContext vulkanContext = { 0 };
 
+// Render batches
 static DynamicArray renderBatches = { 0 };
 
+// ID to be assigned to the next texture loaded
 static uint32_t nextTextureId = 0;
 
+// List of texture data
 static TextureData textureDataList[MAX_NUM_TEXTURE_DESCRIPTORS] = { 0 };
 
+// Window width
 static int _windowWidth = 0;
+// Window height
 static int _windowHeight = 0;
+// Window handle
 static GLFWwindow* _windowHandle = NULL;
 
+// Current clear color
 static Color clearColor = { 0, 0, 0, 255 };
 
+// Flag indicating whether the framebuffer was recently resized
 bool isFramebufferResized = false;
+
 
 // ----------------------------------------
 // Vulkan Function Declarations
 // ----------------------------------------
+
 bool InitVulkan(void);
 bool InitSwapchain(void);
 bool InitRenderPass(void);
@@ -157,6 +172,11 @@ void CleanupSwapchain(void);
 void CleanupDepthStencilBuffer(void);
 
 void RecreateSwapchain(void);
+
+
+// ----------------------------------------
+// Internal Functions
+// ----------------------------------------
 
 RenderBatch* RequestRenderBatch(RenderBatchRequestInfo* info)
 {
