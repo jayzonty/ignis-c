@@ -55,9 +55,16 @@ float Vector2DotProduct(Vector2 a, Vector2 b)
 
 Vector2 Vector2Project(Vector2 a, Vector2 b)
 {
+    Vector2 ret = { 0 };
+
     float numerator = Vector2DotProduct(a, b);
     float denominator = Vector2DotProduct(b, b);
-    return Vector2Scale(b, numerator / denominator);
+    if (denominator > 0.0f)
+    {
+        ret = Vector2Scale(b, numerator / denominator);
+    }
+
+    return ret;
 }
 
 Vector2 Vector2Reflect(Vector2 incident, Vector2 normal)
