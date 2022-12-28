@@ -133,6 +133,15 @@ Vector2 Vector2Direction(Vector2 source, Vector2 destination);
 // ----------------------------------------
 
 /**
+ * @brief Clamps an ineger value between the specified minimum and maximum.
+ * @param[in] val Value to clamp
+ * @param[in] min Minimum value
+ * @param[in] max Maximum value
+ * @return Clamped value
+ */
+int Clamp_Int(int val, int min, int max);
+
+/**
  * @brief Clamps an unsigned 32-bit value between the specified minimum and maximum.
  * @param[in] val Value to clamp
  * @param[in] min Minimum value
@@ -151,20 +160,77 @@ uint32_t Clamp_Uint32(uint32_t val, uint32_t min, uint32_t max);
 float Clamp_Float(float val, float min, float max);
 
 /**
- * @brief Gets the minimum between the two numbers.
+ * @brief Clamps a double value between the specified minimum and maximum.
+ * @param[in] val Value to clamp
+ * @param[in] min Minimum value
+ * @param[in] max Maximum value
+ * @return Clamped value
+ */
+double Clamp_Double(double val, double min, double max);
+
+/**
+ * @brief Gets the minimum between two integers.
  * @param[in] a First number
  * @param[in] b Second number
  * @return Minimum between the two numbers
  */
-uint32_t Min(uint32_t a, uint32_t b);
+int Min_Int(int a, int b);
 
 /**
- * @brief Gets the maximum between the two numbers.
+ * @brief Gets the minimum between two unsigned 32-bit numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Minimum between the two numbers
+ */
+uint32_t Min_Uint32(uint32_t a, uint32_t b);
+
+/**
+ * @brief Gets the minimum between two float numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Minimum between the two numbers
+ */
+float Min_Float(float a, float b);
+
+/**
+ * @brief Gets the minimum between two double numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Minimum between the two numbers
+ */
+double Min_Double(double a, double b);
+
+/**
+ * @brief Gets the maximum between two integers.
  * @param[in] a First number
  * @param[in] b Second number
  * @return Maximum between the two numbers
  */
-uint32_t Max(uint32_t a, uint32_t b);
+uint32_t Max_Int(uint32_t a, uint32_t b);
+
+/**
+ * @brief Gets the maximum between two unsigned 32-bit numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Maximum between the two numbers
+ */
+uint32_t Max_Uint32(uint32_t a, uint32_t b);
+
+/**
+ * @brief Gets the maximum between two float numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Maximum between the two numbers
+ */
+float Max_Float(float a, float b);
+
+/**
+ * @brief Gets the maximum between two double numbers.
+ * @param[in] a First number
+ * @param[in] b Second number
+ * @return Maximum between the two numbers
+ */
+double Max_Double(double a, double b);
 
 /**
  * @brief Linearly interpolates by a factor t between two float values.
@@ -174,6 +240,15 @@ uint32_t Max(uint32_t a, uint32_t b);
  * @return Result of linear interpolation
  */
 float Lerp_Float(float a, float b, float t);
+
+/**
+ * @brief Linearly interpolates by a factor t between two double values.
+ * @param[in] a First value
+ * @param[in] b Second value
+ * @param[in] t Interpolation factor
+ * @return Result of linear interpolation
+ */
+double Lerp_Double(double a, double b, double t);
 
 // extern "C"
 #ifdef __cplusplus

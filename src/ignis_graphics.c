@@ -1221,7 +1221,7 @@ bool InitSwapchain(void)
     uint32_t numSwapchainImages = surfaceCapabilities.minImageCount + 1;
     if (surfaceCapabilities.maxImageCount > 0)
     {
-        numSwapchainImages = Min(numSwapchainImages, surfaceCapabilities.maxImageCount);
+        numSwapchainImages = Min_Uint32(numSwapchainImages, surfaceCapabilities.maxImageCount);
     }
 
     VkSwapchainCreateInfoKHR swapchainCreateInfo = {};

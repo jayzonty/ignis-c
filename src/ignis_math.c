@@ -6,6 +6,8 @@
 // Macros
 // ----------------------------------------
 #define CLAMP_MACRO(val, min, max) if (val < min) return min; if (val > max) return max; return val;
+#define MIN_MACRO(val1, val2) if (val1 <= val2) return val1; return val2;
+#define MAX_MACRO(val1, val2) if (val1 >= val2) return val1; return val2;
 
 Vector2 Vector2Add(Vector2 a, Vector2 b)
 {
@@ -91,35 +93,72 @@ Vector2 Vector2Direction(Vector2 source, Vector2 destination)
     return ret;
 }
 
+int Clamp_Int(int val, int min, int max)
+{
+    CLAMP_MACRO(val, min, max)
+}
+
 uint32_t Clamp_Uint32(uint32_t val, uint32_t min, uint32_t max)
 {
-    CLAMP_MACRO(val, min, max);
+    CLAMP_MACRO(val, min, max)
 }
 
 float Clamp_Float(float val, float min, float max)
 {
-    CLAMP_MACRO(val, min, max);
+    CLAMP_MACRO(val, min, max)
 }
 
-uint32_t Min(uint32_t a, uint32_t b)
+double Clamp_Double(double val, double min, double max)
 {
-    if (a <= b)
-    {
-        return a;
-    }
-    return b;
+    CLAMP_MACRO(val, min, max)
 }
 
-uint32_t Max(uint32_t a, uint32_t b)
+int Min_Int(int a, int b)
 {
-    if (a >= b)
-    {
-        return a;
-    }
-    return b;
+    MIN_MACRO(a, b)
+}
+
+uint32_t Min_Uint32(uint32_t a, uint32_t b)
+{
+    MIN_MACRO(a, b)
+}
+
+float Min_Float(float a, float b)
+{
+    MIN_MACRO(a, b)
+}
+
+double Min_Double(double a, double b)
+{
+    MIN_MACRO(a, b)
+}
+
+uint32_t Max_Int(uint32_t a, uint32_t b)
+{
+    MAX_MACRO(a, b)
+}
+
+uint32_t Max_Uint32(uint32_t a, uint32_t b)
+{
+    MAX_MACRO(a, b)
+}
+
+float Max_Float(float a, float b)
+{
+    MAX_MACRO(a, b)
+}
+
+double Max_Double(double a, double b)
+{
+    MAX_MACRO(a, b)
 }
 
 float Lerp_Float(float a, float b, float t)
+{
+    return a * (1.0f - t) + b * t;
+}
+
+double Lerp_Double(double a, double b, double t)
 {
     return a * (1.0f - t) + b * t;
 }
