@@ -53,6 +53,20 @@ float Vector2DotProduct(Vector2 a, Vector2 b)
     return a.x * b.x + a.y * b.y;
 }
 
+Vector2 Vector2Project(Vector2 a, Vector2 b)
+{
+    float numerator = Vector2DotProduct(a, b);
+    float denominator = Vector2DotProduct(b, b);
+    return Vector2Scale(b, numerator / denominator);
+}
+
+Vector2 Vector2Reflect(Vector2 incident, Vector2 normal)
+{
+    Vector2 proj = Vector2Project(incident, normal);
+    proj = Vector2Scale(proj, 2.0f);
+    return Vector2Subtract(incident, proj);
+}
+
 /**
  * @brief Gets the squared magnitude of the specified vector.
  * @param[in] v Vector

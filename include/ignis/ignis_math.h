@@ -68,6 +68,22 @@ Vector2 Vector2Scale(Vector2 v, float s);
 float Vector2DotProduct(Vector2 a, Vector2 b);
 
 /**
+ * @brief Gets the projection of A onto B.
+ * @param[in] a Vector A
+ * @param[in] b Vector B
+ * @return Vector representing the projection of A onto B
+ */
+Vector2 Vector2Project(Vector2 a, Vector2 b);
+
+/**
+ * @brief Gets the reflection of an incident vector along a normal vector.
+ * @param[in] incident Incident vector
+ * @param[in] normal Normal vector
+ * @return Vector representing the reflection
+ */
+Vector2 Vector2Reflect(Vector2 incident, Vector2 normal);
+
+/**
  * @brief Gets the squared magnitude of the specified vector.
  * @param[in] v Vector
  * @return Vector squared magnitude
