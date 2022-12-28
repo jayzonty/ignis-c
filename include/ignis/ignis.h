@@ -72,10 +72,20 @@ typedef enum
     KEY_Y = 89,
     KEY_Z = 90,
 
+    KEY_ESCAPE = 256,
+    KEY_ENTER = 257,
+    KEY_TAB = 258,
+    KEY_BACKSPACE = 259,
+    KEY_INSERT = 260,
+    KEY_DELETE = 261,
     KEY_RIGHT = 262,
     KEY_LEFT = 263,
     KEY_DOWN = 264,
     KEY_UP = 265,
+    KEY_PAGE_UP = 266,
+    KEY_PAGE_DOWN = 267,
+    KEY_HOME = 268,
+    KEY_END = 269,
 } Key;
 
 // Mouse buttons
