@@ -362,6 +362,28 @@ bool CheckRectsOverlap(Rect rectA, Rect rectB);
  */
 bool CheckCirclesOverlap(Vector2 centerA, float radiusA, Vector2 centerB, float radiusB);
 
+/**
+ * @brief Checks whether the specified circle and rectangle are overlapping.
+ * @param[in] circleCenter Circle center
+ * @param[in] circleRadius Circle radius
+ * @param[in] rect Rectangle
+ * @return True if the circle and rectangle are overlapping
+ */
+bool CheckCircleRectOverlap(Vector2 circleCenter, float circleRadius, Rect rect);
+
+
+// ----------------------------------------
+// Computational Geometry Functions
+// ----------------------------------------
+
+/**
+ * @brief Gets the point on the rectangle nearest to a point.
+ * @param[in] point Point
+ * @param[in] rect Rectangle
+ * @return Rect point nearest to the point
+ */
+Vector2 GetClosestRectPointFromPoint(Vector2 point, Rect rect);
+
 
 // ----------------------------------------
 // Random Functions

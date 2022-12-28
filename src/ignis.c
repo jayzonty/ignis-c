@@ -606,6 +606,29 @@ bool CheckCirclesOverlap(Vector2 centerA, float radiusA, Vector2 centerB, float 
     return sqrDist < radiusSqr;
 }
 
+bool CheckCircleRectOverlap(Vector2 circleCenter, float circleRadius, Rect rect)
+{
+    Vector2 closestPoint = GetClosestRectPointFromPoint(circleCenter, rect);
+
+    float sqrDist = Vector2SquaredDistance(circleCenter, closestPoint);
+    float sqrRadius = circleRadius * circleRadius;
+
+    return sqrDist <= sqrRadius;
+}
+
+
+// ----------------------------------------
+// Computational Geometry Functions
+// ----------------------------------------
+
+Vector2 GetClosestRectPointFromPoint(Vector2 point, Rect rect)
+{
+    Vector2 ret = { 0.0f, 0.0f };
+    ret.x = Clamp_Float(point.x, rect.x, rect.x + rect.width);
+    ret.y = Clamp_Float(point.y, rect.y, rect.y + rect.height);
+    return ret;
+}
+
 
 // ----------------------------------------
 // Random Functions
