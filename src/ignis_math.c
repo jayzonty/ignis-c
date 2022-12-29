@@ -27,6 +27,12 @@ Vector2 Vector2Scale(Vector2 v, float s)
     return ret;
 }
 
+Vector2 Vector2CWiseProduct(Vector2 a, Vector2 b)
+{
+    Vector2 ret = { a.x * b.x, a.y * b.y };
+    return ret;
+}
+
 float Vector2DotProduct(Vector2 a, Vector2 b)
 {
     return a.x * b.x + a.y * b.y;

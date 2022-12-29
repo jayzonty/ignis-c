@@ -60,6 +60,14 @@ Vector2 Vector2Subtract(Vector2 a, Vector2 b);
 Vector2 Vector2Scale(Vector2 v, float s);
 
 /**
+ * @brief Gets the component-wise product between two Vector2's.
+ * @param[in] a First vector
+ * @param[in] b Second vector
+ * @return Componnet-wise product between the two vectors
+ */
+Vector2 Vector2CWiseProduct(Vector2 a, Vector2 b);
+
+/**
  * @brief Gets the dot product between two Vector2's.
  * @param[in] a First vector
  * @param[in] b Scond vector
