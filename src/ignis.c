@@ -565,6 +565,21 @@ void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color
     DrawTextSubstr(position, text, 0, length, font, fontSize, color, depth);
 }
 
+void DrawRectangleLines(Vector2 position, Vector2 size, Vector2 origin, float thickness, Color color, float depth)
+{
+    Vector2 offset = Vector2CWiseProduct(size, origin);
+
+    Vector2 lowerLeftCorner = Vector2Subtract(position, offset);
+    Vector2 lowerRightCorner = { lowerLeftCorner.x + size.x, lowerLeftCorner.y };
+    Vector2 upperLeftCorner = { lowerLeftCorner.x, lowerLeftCorner.y + size.y };
+    Vector2 upperRightCorner = Vector2Add(lowerLeftCorner, size);
+
+    DrawLine(lowerLeftCorner, lowerRightCorner, thickness, color, depth);
+    DrawLine(lowerRightCorner, upperRightCorner, thickness, color, depth);
+    DrawLine(upperRightCorner, upperLeftCorner, thickness, color, depth);
+    DrawLine(upperLeftCorner, lowerLeftCorner, thickness, color, depth);
+}
+
 void Draw(void)
 {
     Ignis_Graphics_Draw();

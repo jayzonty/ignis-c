@@ -337,6 +337,17 @@ void DrawTextSubstr(Vector2 position, const char *text, size_t offset, size_t le
 void DrawText(Vector2 position, const char *text, Font font, int fontSize, Color color, float depth);
 
 /**
+ * @brief Adds a rectangle outline to the list of things to be drawn by the renderer.
+ * @param[in] position Rectangle position
+ * @param[in] size Rectnagle size
+ * @param[in] origin Origin
+ * @param[in] thickness Outline thickness
+ * @param[in] color Color
+ * @param[in] depth Depth
+ */
+void DrawRectangleLines(Vector2 position, Vector2 size, Vector2 origin, float thickness, Color color, float depth);
+
+/**
  * @brief Draws all objects to the framebuffer.
  */
 void Draw(void);
