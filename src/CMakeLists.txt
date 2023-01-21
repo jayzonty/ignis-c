@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 IF (WIN32)
-    set(ENV{VULKAN_SDK} "C:/VulkanSDK/1.3.231.1")
+    set(ENV{VULKAN_SDK} "C:/VulkanSDK/1.3.236.0")
 ENDIF()
 
 find_package(Vulkan REQUIRED)
