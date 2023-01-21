@@ -27,6 +27,17 @@
 #include <string.h>
 #include <time.h>
 
+// For Windows, we use timeBeginPeriod/timeEndPeriod to tune
+// timer granularity, and use Sleep() to do the actual sleep for FPS setting.
+// References
+// http://www.geisswerks.com/ryan/FAQS/timing.html:
+// Raylib source code
+#if defined(_WIN32)
+unsigned int __stdcall timeBeginPeriod(unsigned int uPeriod);
+unsigned int __stdcall timeEndPeriod(unsigned int uPeriod);
+void __stdcall Sleep(unsigned long milliseconds);
+#endif
+
 // Up to what ASCII code will we prepare a glyph texture for
 #define MAX_GLYPHS 128 
 
@@ -271,6 +282,11 @@ bool IgnisInit(const int windowWidth, const int windowHeight, const char* window
 
         // Initialize bezier module
         Ignis_Bezier_Init();
+
+#if defined(_WIN32)
+        // For Windows, set minimum timer resolution to 1ms
+        timeBeginPeriod(1);
+#endif
     }
     else
     {
@@ -302,6 +318,11 @@ void IgnisCleanup(void)
         glfwDestroyWindow(context.window.handle);
         glfwTerminate();
         context.isInitialized = false;
+
+#if defined(_WIN32)
+        // Clear previous setting of minimum timer resolution
+        timeEndPeriod(1);
+#endif
     }
 }
 
@@ -373,8 +394,13 @@ void EndFrame()
         float frameTime = frameEndTime - context.currentFrameStartTime;
 
         double sleepTime = context.targetFrameTime - frameTime;
+        float temp = GetCurrentTime();
         if (sleepTime > 0.0f)
         {
+#if defined(_WIN32)
+            unsigned long sleepMs = sleepTime * 1000L;
+            Sleep(sleepMs);
+#elif defined(__linux__)
             time_t seconds = sleepTime;
             long nanoseconds = (sleepTime - seconds) * 1000000000L;
 
@@ -388,7 +414,9 @@ void EndFrame()
             {
                 continue;
             }
+#endif
         }
+        temp = GetCurrentTime() - temp;
     }
 
     // Process input events

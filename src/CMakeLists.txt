@@ -28,9 +28,21 @@ target_include_directories(ignis PUBLIC
     ${PROJECT_SOURCE_DIR}/include/
 )
 
-target_link_libraries(ignis PRIVATE
-    ${Vulkan_LIBRARY}
-    glfw
-    ${CMAKE_DL_LIBS} 
-    m
-)
+IF (WIN32)
+    set(LINK_LIBRARIES
+        ${Vulkan_LIBRARY}
+        glfw
+        ${CMAKE_DL_LIBS} 
+        m
+        winmm
+    )
+ELSE ()
+    set(LINK_LIBRARIES
+        ${Vulkan_LIBRARY}
+        glfw
+        ${CMAKE_DL_LIBS} 
+        m
+    )
+ENDIF()
+
+target_link_libraries(ignis PRIVATE ${LINK_LIBRARIES})
