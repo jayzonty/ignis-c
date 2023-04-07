@@ -62,3 +62,6 @@ compile_commands.json
 
 # VSCode
 .vscode/
+
+# Visual Studio
+.vs/
