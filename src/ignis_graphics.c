@@ -11,6 +11,7 @@
 
 #include <vulkan/vulkan.h>
 
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -338,7 +339,7 @@ void Ignis_Graphics_EndDrawing()
         for (size_t i = 0; i < numRenderBatchUnits; ++i)
         {
             RenderBatchUnit *unit = (RenderBatchUnit*)DynamicArrayGetElementAt(&renderBatch->renderBatchUnits, i);
-            memcpy(mem + offset * sizeof(Vertex), renderBatch->vertices + unit->firstVertexOffset, sizeof(Vertex) * unit->numVertices);
+            memcpy((char*)mem + offset * sizeof(Vertex), renderBatch->vertices + unit->firstVertexOffset, sizeof(Vertex) * unit->numVertices);
             offset += unit->numVertices;
         }
 

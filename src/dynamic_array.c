@@ -136,7 +136,7 @@ DynamicArrayOpResult DynamicArrayAdd(DynamicArray *array, void *val)
         }
     }
 
-    void *dst = dynamicArrayData->data + dynamicArrayData->size * dynamicArrayData->dataSize;
+    void *dst = (char*)dynamicArrayData->data + dynamicArrayData->size * dynamicArrayData->dataSize;
     memcpy(dst, val, dynamicArrayData->dataSize);
     ++dynamicArrayData->size;
 
@@ -196,7 +196,7 @@ void* DynamicArrayGetElementAt(DynamicArray *array, size_t index)
     DynamicArrayData *dynamicArrayData = (DynamicArrayData*)array->data;
     if (index < dynamicArrayData->size)
     {
-        void *ret = dynamicArrayData->data + index * dynamicArrayData->dataSize;
+        void *ret = (char*)dynamicArrayData->data + index * dynamicArrayData->dataSize;
         return ret;
     }
 

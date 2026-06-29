@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 
+#define NUM_BLOCKS_X 20
+#define NUM_BLOCKS_Y 14
+#define TOTAL_BLOCK_COUNT NUM_BLOCKS_X * NUM_BLOCKS_Y
+
 typedef enum
 {
     STATE_GAME,
@@ -66,13 +70,11 @@ int main()
     Vector2 ballOrigin = { 0.5f, 0.5f };
     Color ballColor = { 255, 255, 255, 255 };
 
-    const int NUM_BLOCKS_X = 20;
-    const int NUM_BLOCKS_Y = 14;
-    const int totalBlockCount = NUM_BLOCKS_X * NUM_BLOCKS_Y;
+    
     Vector2 blockSize = { 37.0f, 15.0f };
     Vector2 blockOrigin = { 0.0f, 0.0f };
     Color blockColor = { 150, 150, 150, 255 };
-    Block blocks[NUM_BLOCKS_X * NUM_BLOCKS_Y];
+    Block blocks[TOTAL_BLOCK_COUNT];
     Vector2 blockSpacing = { 2.0f, 2.0f };
     for (int x = 0; x < NUM_BLOCKS_X; ++x)
     {
@@ -175,7 +177,7 @@ int main()
                 ball.direction = Vector2Normalize(Vector2Subtract(ball.position, paddleCenter));
             }
 
-            for (int index = 0; index < totalBlockCount; ++index)
+            for (int index = 0; index < TOTAL_BLOCK_COUNT; ++index)
             {
                 if (!blocks[index].isActive)
                 {
@@ -263,7 +265,7 @@ int main()
                 currentState = STATE_GAME;
 
                 remainingLives = maxLives;
-                for (int index = 0; index < totalBlockCount; ++index)
+                for (int index = 0; index < TOTAL_BLOCK_COUNT; ++index)
                 {
                     blocks[index].isActive = true;
                 }
